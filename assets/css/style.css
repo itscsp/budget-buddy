@@ -1,0 +1,325 @@
+.bb_container {
+    max-width: 750px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+.bb_header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.bb_header h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin: 0;
+    color: #1e73be;
+}
+
+.bb_balance_summary {
+    margin: 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.bb_balance {
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.positive {
+    color: #4caf50;
+}
+
+.negative {
+    color: #f44336;
+}
+
+.bb_btn {
+    margin: 0;
+    padding: 10px 25px;
+    border: 0;
+    font-size: 16px;
+    text-transform: uppercase;
+    background: #1e73be;
+    color: #fff;
+    box-sizing: border-box;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.bb_btn:hover {
+    background: #135e9e;
+}
+
+/* Modal styles */
+.bb_modal_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+}
+
+.bb_modal_overlay.active {
+    display: flex;
+}
+
+.bb_modal {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: calc(100vw - 20px);
+    position: relative;
+}
+
+.bb_modal .bb_close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+table.bb_table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+table.bb_table th {
+    background: #2f2f2f;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+}
+
+.bb_month_header {
+    font-weight: bold;
+    background-color: #e1e1e1;
+    padding: 10px;
+    color: #333;
+}
+
+.income {
+     /* soft green */
+    background: #004500;
+}
+
+.expense {
+    background-color: rgba(244, 67, 54, 0.1); /* soft red */
+}
+
+.loan {
+    background-color: rgba(255, 193, 7, 0.1); /* soft yellow */
+}
+
+.bb_expand_btn {
+    padding: 5px 10px;
+    font-size: 14px;
+    background: #000;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.bb_expand_btn:hover {
+    background: #ccc;
+}
+
+.bb_description_row td {
+    background-color: #000;
+    font-style: italic;
+    padding: 15px;
+}
+
+/* Modal overlay */
+.bb_modal_overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* When modal is active */
+.bb_modal_overlay.active {
+    display: flex;
+}
+
+/* Modal container */
+.bb_modal {
+    background: #fff;
+    padding: 30px 25px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/* Close button */
+.bb_modal .bb_close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+}
+
+.bb_modal .bb_close:hover {
+    color: #000;
+}
+
+/* Form styles */
+.bb_modal form label {
+    display: block;
+    font-weight: 600;
+    margin: 15px 0 5px;
+}
+
+.bb_modal form input,
+.bb_modal form select {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.bb_modal form input[type="submit"] {
+    margin-top: 20px;
+    background: #1e73be;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.bb_modal form input[type="submit"]:hover {
+    background: #135e9e;
+}
+
+/* Modal heading */
+.bb_modal .bb_heading {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    margin-top: 0;
+}
+
+/* Fade-in animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bb_table_td {
+    padding: 10px;
+}
+
+.bb_table_data{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bb_delete_btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.bb_delete_btn:hover {
+    background-color: #d32f2f;
+}
+
+.bb_not_logged_in {
+    max-width: 750px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.bb_not_logged_in h2 {
+    color: #1e73be;
+    margin-top: 0;
+}
+
+.bb_not_logged_in a {
+    color: #1e73be;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.bb_not_logged_in a:hover {
+    text-decoration: underline;
+}
+
+.bb_no_data {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+.updated {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px 13px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+}
+
+.budget-buddy-active .entry-content.alignfull.wp-block-post-content.has-global-padding.is-layout-constrained.wp-block-post-content-is-layout-constrained {
+    padding-right: 0;
+    padding-left: 0;
+}
+    
