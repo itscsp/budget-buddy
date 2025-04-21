@@ -13,37 +13,21 @@ defined('ABSPATH') || exit;
 // Enqueue custom styles and scripts
 add_action('wp_enqueue_scripts', 'bb_enqueue_assets');
 
-function bb_enqueue_assets() {
+function bb_enqueue_assets()
+{
     $plugin_url = plugin_dir_url(__FILE__);
 
     // Only load on pages where the shortcode is used
     wp_enqueue_style('bb-style', $plugin_url . 'assets/css/style.css');
     wp_enqueue_script('bb-script', $plugin_url . 'assets/js/script.js', array('jquery'), null, true);
+
+    // Pass data to JavaScript
+    wp_localize_script('bb-script', 'bb_data', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'report_nonce' => wp_create_nonce('bb_report_nonce')
+    ));
 }
 
-add_action('init', 'bb_handle_transaction_delete');
-
-function bb_handle_transaction_delete() {
-    if (isset($_POST['bb_delete_transaction']) && !empty($_POST['transaction_id'])) {
-        if (!is_user_logged_in()) {
-            return; // prevent unauthenticated access
-        }
-
-        global $wpdb;
-
-        $table = $wpdb->prefix . 'bb_transactions';
-        $id = intval($_POST['transaction_id']);
-        $user_id = get_current_user_id();
-
-        // Delete transaction if it belongs to the user
-        $deleted = $wpdb->delete($table, ['id' => $id, 'user_id' => $user_id]);
-
-        if ($deleted !== false) {
-            wp_redirect(home_url('/budget'));
-            exit;
-        }
-    }
-}
 
 
 // Include plugin files
@@ -53,13 +37,16 @@ include_once plugin_dir_path(__FILE__) . 'includes/bb-functions.php';
 // Activation Hook: Create database table on plugin activation
 register_activation_hook(__FILE__, 'bb_install');
 
-function bb_install() {
+function bb_install()
+{
     global $wpdb;
-    $table_name = $wpdb->prefix . 'bb_transactions';
-
     $charset_collate = $wpdb->get_charset_collate();
 
-    $sql = "CREATE TABLE $table_name (
+    $table_name = $wpdb->prefix . 'bb_transactions';
+    $plans_table = $wpdb->prefix . 'bb_monthly_plans';
+
+
+    $sql1 = "CREATE TABLE $table_name (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         user_id bigint(20) NOT NULL,
         type varchar(10) NOT NULL,
@@ -69,14 +56,25 @@ function bb_install() {
         PRIMARY KEY (id)
     ) $charset_collate;";
 
+    // Create monthly plans table
+    $sql2 = "CREATE TABLE $plans_table (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        user_id bigint(20) NOT NULL,
+        plan_text text NOT NULL,
+        amount float NOT NULL,
+        plan_month date NOT NULL,
+        status varchar(10) DEFAULT 'pending',
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+    ) $charset_collate;";
+
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
+    dbDelta($sql1);
+    dbDelta($sql2);
 }
 
-
-
-
-function bb_tracker_shortcode($atts) {
+function bb_tracker_shortcode($atts)
+{
     // Check if user is logged in
     if (!is_user_logged_in()) {
         $login_url = wp_login_url(get_permalink());
@@ -101,7 +99,8 @@ function bb_tracker_shortcode($atts) {
 add_shortcode('budget_buddy', 'bb_tracker_shortcode');
 
 add_filter('body_class', 'bb_add_body_class_if_shortcode_used');
-function bb_add_body_class_if_shortcode_used($classes) {
+function bb_add_body_class_if_shortcode_used($classes)
+{
     global $bb_using_shortcode;
 
     if (!empty($bb_using_shortcode)) {
@@ -109,4 +108,28 @@ function bb_add_body_class_if_shortcode_used($classes) {
     }
 
     return $classes;
+}
+
+
+// Register AJAX handlers
+add_action('wp_ajax_bb_get_monthly_report', 'bb_ajax_get_monthly_report');
+
+/**
+ * AJAX handler for monthly report
+ */
+function bb_ajax_get_monthly_report()
+{
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bb_report_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+
+    if (!isset($_POST['month']) || empty($_POST['month'])) {
+        wp_send_json_error('Missing month parameter');
+    }
+
+    $month = sanitize_text_field($_POST['month']);
+    $summary = bb_get_monthly_summary($month);
+
+    wp_send_json_success($summary);
 }

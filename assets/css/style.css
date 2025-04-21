@@ -1,4 +1,5 @@
-.bb_container {
+/* Container */
+.bb-container {
     max-width: 750px;
     width: 100%;
     margin: 0 auto;
@@ -7,7 +8,8 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
-.bb_header {
+/* Header */
+.bb-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -15,20 +17,20 @@
     flex-wrap: wrap;
 }
 
-.bb_header h1 {
+.bb-header__title {
     font-size: 32px;
     font-weight: 900;
     margin: 0;
     color: #1e73be;
 }
 
-.bb_balance_summary {
+.bb-balance {
     margin: 10px 0;
     font-size: 18px;
     font-weight: 600;
 }
 
-.bb_balance {
+.bb-balance__value {
     padding: 5px 10px;
     border-radius: 4px;
     font-weight: bold;
@@ -42,125 +44,32 @@
     color: #f44336;
 }
 
-.bb_btn {
-    margin: 0;
+.bb-btn--add {
     padding: 10px 25px;
     border: 0;
     font-size: 16px;
     text-transform: uppercase;
     background: #1e73be;
     color: #fff;
-    box-sizing: border-box;
-    cursor: pointer;
     border-radius: 4px;
+    cursor: pointer;
     transition: background 0.3s;
 }
 
-.bb_btn:hover {
+.bb-btn--add:hover {
     background: #135e9e;
 }
 
-/* Modal styles */
-.bb_modal_overlay {
+/* Modal Overlay */
+.bb-modal__overlay {
     display: none;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     max-width: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: 999;
-    justify-content: center;
-    align-items: center;
-}
-
-.bb_modal_overlay.active {
-    display: flex;
-}
-
-.bb_modal {
-    background: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    max-width: calc(100vw - 20px);
-    position: relative;
-}
-
-.bb_modal .bb_close {
-    position: absolute;
-    right: 15px;
-    top: 10px;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-table.bb_table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-}
-
-table.bb_table th {
-    background: #2f2f2f;
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-}
-
-.bb_month_header {
-    font-weight: bold;
-    background-color: #e1e1e1;
-    padding: 10px;
-    color: #333;
-}
-
-.income {
-     /* soft green */
-    background: #004500;
-}
-
-.expense {
-    background-color: rgba(244, 67, 54, 0.1); /* soft red */
-}
-
-.loan {
-    background-color: rgba(255, 193, 7, 0.1); /* soft yellow */
-}
-
-.bb_expand_btn {
-    padding: 5px 10px;
-    font-size: 14px;
-    background: #000;
-    border: none;
-    cursor: pointer;
-    border-radius: 3px;
-    transition: background 0.2s;
-}
-
-.bb_expand_btn:hover {
-    background: #ccc;
-}
-
-.bb_description_row td {
-    background-color: #000;
-    font-style: italic;
-    padding: 15px;
-}
-
-/* Modal overlay */
-.bb_modal_overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0,0,0,0.6);
     z-index: 999;
     justify-content: center;
     align-items: center;
@@ -168,13 +77,11 @@ table.bb_table th {
     box-sizing: border-box;
 }
 
-/* When modal is active */
-.bb_modal_overlay.active {
+.bb-modal__overlay.active {
     display: flex;
 }
 
-/* Modal container */
-.bb_modal {
+.bb-modal {
     background: #fff;
     padding: 30px 25px;
     border-radius: 10px;
@@ -183,10 +90,11 @@ table.bb_table th {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     position: relative;
     animation: fadeInUp 0.3s ease-out;
+    margin: auto;
 }
 
-/* Close button */
-.bb_modal .bb_close {
+.bb-transation_modal__close,
+.bb-plan_modal__close {
     position: absolute;
     right: 15px;
     top: 10px;
@@ -196,19 +104,27 @@ table.bb_table th {
     cursor: pointer;
 }
 
-.bb_modal .bb_close:hover {
+.bb-transation_modal__close:hover,
+.bb-plan_modal__close:hover {
     color: #000;
 }
 
-/* Form styles */
-.bb_modal form label {
+.bb-modal__heading {
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 700;
+    color: #333;
+    margin-top: 0;
+}
+
+/* Form inside modal */
+.bb-form label {
     display: block;
     font-weight: 600;
     margin: 15px 0 5px;
 }
 
-.bb_modal form input,
-.bb_modal form select {
+.bb-form__input {
     width: 100%;
     padding: 10px;
     font-size: 15px;
@@ -217,7 +133,7 @@ table.bb_table th {
     box-sizing: border-box;
 }
 
-.bb_modal form input[type="submit"] {
+.bb-form__submit {
     margin-top: 20px;
     background: #1e73be;
     color: white;
@@ -227,20 +143,178 @@ table.bb_table th {
     transition: background 0.3s;
 }
 
-.bb_modal form input[type="submit"]:hover {
+.bb-form__submit:hover {
     background: #135e9e;
 }
 
-/* Modal heading */
-.bb_modal .bb_heading {
-    margin-bottom: 20px;
+/* Transaction History */
+.bb-history__heading {
     font-size: 22px;
-    font-weight: 700;
-    color: #333;
-    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
-/* Fade-in animation */
+.bb-history__table-head {
+    display: flex;
+    font-weight: bold;
+    background: #f0f0f0;
+    padding: 10px;
+}
+
+.bb-history__column {
+    flex: 1;
+    padding: 5px;
+}
+
+.bb-month {
+    margin-bottom: 25px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 15px;
+}
+
+.bb-month__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bb-month__title {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.bb-alert {
+    margin-top: 20px;
+    padding: 15px;
+    border-left: 5px solid #46b450;
+    background: #ecf9ec;
+    color: #2e7d32;
+    border-radius: 4px;
+    transition: opacity 0.5s ease-out;
+}
+
+
+.bb-month__plan-btn {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.bb-month__plan-label {
+    font-style: italic;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Transactions */
+.bb-transaction {
+    padding: 10px;
+}
+
+.bb-transaction__main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.bb-transaction__date {
+    font-weight: 600;
+    font-size: 16px;
+    background: #000000;
+    border-radius: 5px;
+    padding: 5px 12px;
+    color: #ffffff;
+}
+
+.bb-transaction__amount-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.bb-transaction__amount {
+    font-weight: bold;
+    margin: 0;
+}
+
+
+.bb-expand-btn {
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+button.bb-expand-btn.Collapse {
+    transform: rotate(270deg);
+}
+
+.bb-expand-btn:hover {
+    background-color: transparent;
+}
+
+/* Transaction Types */
+.bb-transaction--income {
+    background-color: rgba(76, 175, 80, 0.1); /* green tint */
+}
+
+.bb-transaction--expense {
+    background-color: rgba(244, 67, 54, 0.1); /* red tint */
+}
+
+.bb-transaction--loan {
+    background-color: rgba(255, 193, 7, 0.1); /* yellow tint */
+}
+
+/* Transaction Details */
+.bb-transaction__details {
+    margin-top: 10px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-left: 4px solid #1e73be;
+    border-radius: 4px;
+}
+
+/* Delete Button */
+.bb-delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.bb-delete-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* No Data Message */
+.bb-no-data {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+}
+
+/* Notification Message */
+.updated {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 15px 13px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #28a745;
+}
+
+/* Animation */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -252,74 +326,165 @@ table.bb_table th {
     }
 }
 
-.bb_table_td {
-    padding: 10px;
+.bb-plan-list {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 15px;
 }
 
-.bb_table_data{
+.bb-plan-item {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid #1e73be;
+    border-radius: 4px;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.bb_delete_btn {
-    background-color: #f44336;
-    color: white;
-    border: none;
-    padding: 5px 12px;
+.bb-plan-content {
+    display: flex;
+    align-items: center;
+}
+
+.bb-add-plan-form {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.bb-add-plan-form input[type="text"] {
+    flex: 1;
+    padding: 8px;
     border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.3s;
+    border: 1px solid #ccc;
 }
 
-.bb_delete_btn:hover {
-    background-color: #d32f2f;
+.bb-btn.small {
+    padding: 6px 12px;
+    font-size: 14px;
 }
 
-.bb_not_logged_in {
-    max-width: 750px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 40px 20px;
+
+.bb-month__plan-summary {
+    margin: 10px 0;
+    font-weight: 600;
+    background: #f1f1f1;
+    padding: 10px;
+    border-radius: 4px;
+    color: #333;
+}
+
+
+/* Report Modal Styles */
+.bb-report-content {
+    margin-bottom: 20px;
+}
+
+.bb-report-loading {
     text-align: center;
-    background-color: #f5f5f5;
+    padding: 20px 0;
+    font-style: italic;
+    color: #666;
+}
+
+.bb-report-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.bb-report-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1e73be;
+    margin-bottom: 5px;
+}
+
+.bb-report-subtitle {
+    font-size: 16px;
+    color: #666;
+}
+
+.bb-report-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.bb-report-card {
+    flex: 1;
+    min-width: 120px;
+    background: #f5f5f5;
+    padding: 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.bb_not_logged_in h2 {
-    color: #1e73be;
-    margin-top: 0;
+.bb-report-card.income {
+    background-color: rgba(76, 175, 80, 0.1);
 }
 
-.bb_not_logged_in a {
-    color: #1e73be;
-    text-decoration: none;
+.bb-report-card.expense {
+    background-color: rgba(244, 67, 54, 0.1);
+}
+
+.bb-report-card.loan {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.bb-report-card.net {
+    background-color: rgba(30, 115, 190, 0.1);
+}
+
+.bb-report-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.bb-report-value {
+    font-size: 22px;
     font-weight: bold;
 }
 
-.bb_not_logged_in a:hover {
-    text-decoration: underline;
+.positive {
+    color: #4caf50;
 }
 
-.bb_no_data {
-    padding: 30px;
-    text-align: center;
-    color: #666;
-    font-style: italic;
+.negative {
+    color: #f44336;
 }
 
-.updated {
-    background-color: #d4edda;
-    color: #155724;
-    padding: 15px 13px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    border-left: 4px solid #28a745;
+.bb-report-actions {
+    text-align: right;
+    margin-top: 20px;
 }
 
-.budget-buddy-active .entry-content.alignfull.wp-block-post-content.has-global-padding.is-layout-constrained.wp-block-post-content-is-layout-constrained {
-    padding-right: 0;
-    padding-left: 0;
-}
+@media print {
+    .bb-modal {
+        box-shadow: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+    }
     
+    .bb-report_modal__close,
+    .bb-report-actions {
+        display: none;
+    }
+    
+    body * {
+        visibility: hidden;
+    }
+    
+    .bb-modal, .bb-modal * {
+        visibility: visible;
+    }
+}
