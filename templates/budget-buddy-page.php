@@ -1,11 +1,5 @@
 <?php
-// --- Handle adding a transaction ---
-if (isset($_POST['bb_form_submitted']) && is_user_logged_in()) {
-    bb_add_transaction($_POST['type'], $_POST['amount'], $_POST['description'], $_POST['date']);
-    set_transient('bb_flash_message_' . get_current_user_id(), 'Transaction Added!', 30);
-    wp_redirect($_SERVER['REQUEST_URI']);
-    exit;
-}
+
 
 // --- Handle adding a plan ---
 if (isset($_POST['bb_add_plan']) && is_user_logged_in()) {
@@ -19,13 +13,6 @@ if (isset($_POST['bb_add_plan']) && is_user_logged_in()) {
 if (isset($_POST['bb_update_plan_status']) && is_user_logged_in()) {
     bb_update_plan_status($_POST['plan_id'], $_POST['new_status']);
     set_transient('bb_flash_message_' . get_current_user_id(), 'Plan updated!', 30);
-    wp_redirect($_SERVER['REQUEST_URI']);
-    exit;
-}
-
-if (isset($_POST['bb_delete_transaction']) && is_user_logged_in()) {
-    bb_handle_transaction_delete($_POST['transaction_id']);
-    set_transient('bb_flash_message_' . get_current_user_id(), 'Transaction deleted!', 30);
     wp_redirect($_SERVER['REQUEST_URI']);
     exit;
 }
@@ -62,27 +49,27 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
             </svg>
         </span>
         <h4 class="bb-modal__heading">Add Income or Expense</h4>
-        <form method="post" class="bb-form">
-            <input type="hidden" name="bb_form_submitted" value="1" />
+       <form class="bb-form">
+    <input type="hidden" name="bb_form_submitted" value="1" />
 
-            <label for="bb-type">Type:</label>
-            <select id="bb-type" name="type" class="bb-form__input">
-                <option value="expense">Expense</option>
-                <option value="loan">Loan</option>
-                <option value="income">Income</option>
-            </select>
+    <label for="bb-type">Type:</label>
+    <select id="bb-type" name="type" class="bb-form__input">
+        <option value="expense">Expense</option>
+        <option value="loan">Loan</option>
+        <option value="income">Income</option>
+    </select>
 
-            <label for="bb-amount">Amount:</label>
-            <input id="bb-amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
+    <label for="bb-amount">Amount:</label>
+    <input id="bb-amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
 
-            <label for="bb-description">Description:</label>
-            <input id="bb-description" type="text" name="description" class="bb-form__input" />
+    <label for="bb-description">Description:</label>
+    <input id="bb-description" type="text" name="description" class="bb-form__input" />
 
-            <label for="bb-date">Date:</label>
-            <input id="bb-date" type="date" name="date" required value="<?php echo date('Y-m-d'); ?>" class="bb-form__input" />
+    <label for="bb-date">Date:</label>
+    <input id="bb-date" type="date" name="date" required value="<?php echo date('Y-m-d'); ?>" class="bb-form__input" />
 
-            <input type="submit" value="Add Transaction" class="button button-primary bb-form__submit" />
-        </form>
+    <input type="submit" value="Add Transaction" class="button button-primary bb-form__submit" />
+</form>
     </div>
 </div>
 
@@ -115,7 +102,7 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
 <div id="bb_report_modal_overlay" class="bb-report_modal__overlay bb-modal__overlay">
     <div class="bb-modal">
         <span class="bb-report_modal__close">
-            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="24px" width="24px" xmlns="http://www.w3.org/2000/svg">
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
                 <path d="M331.3 308.7L278.6 256l52.7-52.7c6.2-6.2 6.2-16.4 0-22.6-6.2-6.2-16.4-6.2-22.6 0L256 233.4l-52.7-52.7c-6.2-6.2-15.6-7.1-22.6 0-7.1 7.1-6 16.6 0 22.6l52.7 52.7-52.7 52.7c-6.7 6.7-6.4 16.3 0 22.6 6.4 6.4 16.4 6.2 22.6 0l52.7-52.7 52.7 52.7c6.2 6.2 16.4 6.2 22.6 0 6.3-6.2 6.3-16.4 0-22.6z"></path>
                 <path d="M256 76c48.1 0 93.3 18.7 127.3 52.7S436 207.9 436 256s-18.7 93.3-52.7 127.3S304.1 436 256 436c-48.1 0-93.3-18.7-127.3-52.7S76 304.1 76 256s18.7-93.3 52.7-127.3S207.9 76 256 76m0-28C141.1 48 48 141.1 48 256s93.1 208 208 208 208-93.1 208-208S370.9 48 256 48z"></path>
             </svg>
@@ -132,18 +119,17 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
 
 <section class="bb-container">
     <div class="bb-header">
-        <h1 class="bb-header__title">BudgetBuddy</h1>
+        <h1 class="bb-header__title">Budget</h1>
         
         <button id="bb_add_action" class="bb-btn bb-btn--add">Add</button>
     </div>
 
     <div class="bb-history">
-        <h3 class="bb-history__heading">Monthly Transaction History</h3>
+
 
         <div class="bb-history__table">
             <div class="bb-history__table-head">
-                <div class="bb-history__column">Date</div>
-                <div class="bb-history__column">Amount</div>
+            	<h3 class="bb-history__heading">Monthly Transaction History</h3>
             </div>
 
             <div class="bb-history__body">
@@ -203,11 +189,11 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
                                             </form>
                                         <?php endif; ?>
                                         <!-- Delete form -->
-                                        <form method="post" onsubmit="return confirm('Are you sure you want to delete this plan?');" class="bb-plan-delete-form">
+                                        <form  onsubmit="return confirm('Are you sure you want to delete this plan?');" class="bb-plan-delete-form">
                                             <input type="hidden" name="bb_delete_plan" value="1" />
                                             <input type="hidden" name="plan_id" value="<?php echo esc_attr($plan->id); ?>" />
                                             <button type="submit">
-                                                <svg stroke="currentColor" fill="red" stroke-width="0" viewBox="0 0 512 512" height="24px" width="24px" xmlns="http://www.w3.org/2000/svg">
+                                                <svg stroke="currentColor" fill="red" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M128 405.429C128 428.846 147.198 448 170.667 448h170.667C364.802 448 384 428.846 384 405.429V160H128v245.429zM416 96h-80l-26.785-32H202.786L176 96H96v32h320V96z"></path>
                                                 </svg>
                                             </button>
@@ -234,7 +220,7 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
                                     <div class="bb-transaction__main">
                                         <date class="bb-transaction__date"><?php echo esc_html(date('d', strtotime($tx->date))); ?></date>
                                         <div class="bb-transaction__amount-wrapper">
-                                            <p class="bb-transaction__amount"><?php echo esc_html(number_format($tx->amount, 2)); ?></p>
+                                            <p class="bb-transaction__amount"><?php echo esc_attr($tx->type === 'income' ? '+' : '-' ); ?> ₹<?php echo esc_html(number_format($tx->amount, 2)); ?></p>
                                             <button class="bb-expand-btn"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
                                                     <path d="M256 294.1L383 167c9.4-9.4 24.6-9.4 33.9 0s9.3 24.6 0 34L273 345c-9.1 9.1-23.7 9.3-33.1.7L95 201.1c-4.7-4.7-7-10.9-7-17s2.3-12.3 7-17c9.4-9.4 24.6-9.4 33.9 0l127.1 127z"></path>
                                                 </svg></button>
@@ -247,11 +233,10 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
                                         <strong>Date:</strong> <?php echo esc_html(date('F j, Y', strtotime($tx->date))); ?><br><br>
 
                                         <!-- Delete form -->
-                                        <form method="post" onsubmit="return confirm('Are you sure you want to delete this transaction?');" class="bb-delete-form">
-                                            <input type="hidden" name="bb_delete_transaction" value="1" />
-                                            <input type="hidden" name="transaction_id" value="<?php echo esc_attr($tx->id); ?>" />
-                                            <button type="submit" class="bb-delete-btn">Delete</button>
-                                        </form>
+                                        <form class="bb-delete-form">
+    <input type="hidden" name="transaction_id" value="<?php echo esc_attr($tx->id); ?>" />
+    <button type="button" class="bb-delete-btn delete-transaction-btn" data-id="<?php echo esc_attr($tx->id); ?>">Delete</button>
+</form>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

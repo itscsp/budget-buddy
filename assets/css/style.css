@@ -3,7 +3,7 @@
     max-width: 750px;
     width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 0px;
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
@@ -19,9 +19,22 @@
 
 .bb-header__title {
     font-size: 32px;
-    font-weight: 900;
+    font-weight: 400;
     margin: 0;
-    color: #1e73be;
+    color: var(--accent);
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+button#bb_add_action {
+    padding: 5px 25px;
+    font-size: 16px;
+    outline: none;
+    border-radius: 0px;
+    border: 1px solid;
+    color: var(--accent);
+    background: var(--bg-body);
+    text-transform: capitalize;
+    cursor: pointer;
 }
 
 .bb-balance {
@@ -124,6 +137,7 @@
     display: block;
     font-weight: 600;
     margin: 15px 0 5px;
+    color: #000;
 }
 
 .bb-form__input {
@@ -152,15 +166,17 @@
 /* Transaction History */
 .bb-history__heading {
     font-size: 22px;
-    margin-bottom: 15px;
+    margin-bottom: 0;
     font-weight: 600;
 }
 
 .bb-history__table-head {
     display: flex;
     font-weight: bold;
-    background: #f0f0f0;
-    padding: 10px;
+    background: transparent;
+    padding: 10px 0px;
+    border-bottom: 1px solid var(--accent);
+    margin-bottom: 15px;
 }
 
 .bb-history__column {
@@ -219,6 +235,10 @@
     outline: none;
     box-shadow: none;
     border: none;
+    padding: 4px 5px;
+    background-image: none;
+    border-radius: 10px;
+    cursor:pointer;
 }
 
 
@@ -237,7 +257,7 @@ button.bb-month__plan-btn, button.bb-month__report-btn, .bb-form__submit,  butto
 
 /* Transactions */
 .bb-transaction {
-    padding: 10px;
+    padding: 5px 10px;
 }
 
 .bb-transaction__main {
@@ -248,12 +268,13 @@ button.bb-month__plan-btn, button.bb-month__report-btn, .bb-form__submit,  butto
 }
 
 .bb-transaction__date {
-    font-weight: 600;
-    font-size: 16px;
+    font-weight: 400;
+    font-size: 18px;
     background: #000000;
-    border-radius: 5px;
-    padding: 5px 12px;
+    border-radius: 10px;
+    padding: 5px 10px;
     color: #ffffff;
+    border: 1px solid var(--accent);
 }
 
 .bb-transaction__amount-wrapper {
@@ -265,15 +286,16 @@ button.bb-month__plan-btn, button.bb-month__report-btn, .bb-form__submit,  butto
 }
 
 .bb-transaction__amount {
-    font-weight: bold;
+    font-weight: 500;
     margin: 0;
 }
 
 
 .bb-expand-btn {
     background-color: transparent;
-    border: none;
+    border: none !important;
     cursor: pointer;
+    background-image: none;
 }
 
 button.bb-expand-btn.Collapse {
@@ -284,26 +306,13 @@ button.bb-expand-btn.Collapse {
     background-color: transparent;
 }
 
-/* Transaction Types */
-.bb-transaction--income {
-    background-color: rgba(76, 175, 80, 0.1); /* green tint */
-}
-
-.bb-transaction--expense {
-    background-color: rgba(244, 67, 54, 0.1); /* red tint */
-}
-
-.bb-transaction--loan {
-    background-color: rgba(255, 193, 7, 0.1); /* yellow tint */
-}
 
 /* Transaction Details */
 .bb-transaction__details {
     margin-top: 10px;
-    padding: 10px;
-    background: #f9f9f9;
-    border-left: 4px solid #1e73be;
-    border-radius: 4px;
+    padding: 15px;
+    background: #000;
+    border-radius: 10px;
 }
 
 /* Delete Button */
@@ -360,8 +369,7 @@ button.bb-expand-btn.Collapse {
 .bb-plan-item {
     margin-bottom: 10px;
     padding: 8px 12px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background: #000;
     border-left: 4px solid #1e73be;
     border-radius: 4px;
     position: relative;
@@ -451,19 +459,19 @@ button.bb-expand-btn.Collapse {
 }
 
 .bb-report-card.income {
-    background-color: rgba(76, 175, 80, 0.1);
+    background-color: green;
 }
 
 .bb-report-card.expense {
-    background-color: rgba(244, 67, 54, 0.1);
+    background-color: red;
 }
 
 .bb-report-card.loan {
-    background-color: rgba(255, 193, 7, 0.1);
+    background-color: yellow;
 }
 
 .bb-report-card.net {
-    background-color: rgba(30, 115, 190, 0.1);
+    background-color: rgb(30 115 190 / 95%);
 }
 
 .bb-report-label {
@@ -478,11 +486,11 @@ button.bb-expand-btn.Collapse {
 }
 
 .positive {
-    color: #4caf50;
+    color: #fff;
 }
 
 .negative {
-    color: #f44336;
+    color: #fff;
 }
 
 .bb-report-actions {
@@ -512,4 +520,57 @@ button.bb-expand-btn.Collapse {
     .bb-modal, .bb-modal * {
         visibility: visible;
     }
+}
+
+.bb-transaction {
+    transition: opacity 0.3s ease;
+}
+
+.bb-alert {
+    transition: opacity 0.5s ease;
+}
+
+.bb-transaction.bb-transaction--expense {
+    border-left: 5px solid red;
+}
+
+.bb-transaction.bb-transaction--expense p.bb-transaction__amount {
+    color:red;
+}
+
+.bb-transaction.bb-transaction--income {
+    border-left: 5px solid green;
+}
+
+.bb-transaction.bb-transaction--income p.bb-transaction__amount {
+    color:green;
+}
+
+.bb-transaction.bb-transaction--loan {
+    border-left: 5px solid yellow;
+}
+
+.bb-transaction.bb-transaction--loan p.bb-transaction__amount {
+    color:yellow;
+}
+
+
+.bb-report-card.loan * {
+    color: #000;
+}
+
+.bb-report-details * {
+    color: #000;
+}
+
+button#bb-print-report {
+        padding: 10px 25px;
+        font-size: 16px;
+        outline: none;
+        border-radius: 0px;
+        border: 1px solid;
+        color: var(--accent);
+        background: var(--bg-body);
+        text-transform: capitalize;
+        cursor: pointer;
 }

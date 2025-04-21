@@ -252,3 +252,94 @@ function generateReportHTML(data, container) {
   
   container.innerHTML = html;
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  jQuery(function ($) {
+    $('.bb-form').on('submit', function (e) {
+      e.preventDefault();
+
+      const form = $(this);
+      const formData = {
+        action: 'bb_add_transaction',
+        report_nonce: bb_data.report_nonce,  // Changed from nonce to report_nonce
+        type: form.find('[name="type"]').val(),
+        amount: form.find('[name="amount"]').val(),
+        description: form.find('[name="description"]').val(),
+        date: form.find('[name="date"]').val(),
+      };
+
+      $.post(bb_data.ajax_url, formData, function (response) {  // Use bb_data instead of bb_ajax_obj
+        if (response.success) {
+          alert(response.data.message);
+          form[0].reset(); // reset the form
+          window.location.reload(); // Reload page to show new transaction
+        } else {
+          alert(response.data.message || 'Error adding transaction');
+        }
+      });
+    });
+  });
+});
+
+
+// Delete transaction via AJAX
+document.addEventListener("DOMContentLoaded", () => {
+  // Use event delegation for delete buttons (works for dynamically added elements too)
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('delete-transaction-btn')) {
+      e.preventDefault();
+      
+      const transactionId = e.target.getAttribute('data-id');
+      
+      if (confirm('Are you sure you want to delete this transaction?')) {
+        // Prepare the data
+        const formData = new FormData();
+        formData.append('action', 'bb_delete_transaction');
+        formData.append('transaction_id', transactionId);
+        formData.append('security', bb_data.report_nonce);
+        
+        // Show loading state
+        e.target.textContent = 'Deleting...';
+        e.target.disabled = true;
+        
+        // Send AJAX request
+        fetch(bb_data.ajax_url, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Find and remove the transaction element from the DOM
+            const transactionElement = e.target.closest('.bb-transaction');
+            transactionElement.style.opacity = '0';
+            setTimeout(() => {
+              transactionElement.remove();
+              // Display success message
+              const alertDiv = document.createElement('div');
+              alertDiv.className = 'updated bb-alert';
+              alertDiv.innerHTML = `<p>${data.data.message}</p>`;
+              document.querySelector('.bb-container').prepend(alertDiv);
+              
+              // Auto-remove the alert after 3 seconds
+              setTimeout(() => {
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500);
+              }, 3000);
+            }, 300);
+          } else {
+            alert(data.data.message || 'Error deleting transaction');
+            e.target.textContent = 'Delete';
+            e.target.disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error deleting transaction. Please try again.');
+          e.target.textContent = 'Delete';
+          e.target.disabled = false;
+        });
+      }
+    }
+  });
+});

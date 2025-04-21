@@ -251,4 +251,3 @@ function bb_get_monthly_summary($month) {
         'month_name' => date('F Y', strtotime($month))
     ];
 }
-
