@@ -90,13 +90,35 @@ function bb_tracker_shortcode($atts)
 
     ob_start();
 
-    // Include the HTML UI
-    include plugin_dir_path(__FILE__) . 'includes/bb-user-ui.php';
+    include plugin_dir_path(__FILE__) . 'templates/budget-buddy-page.php';
 
     return ob_get_clean();
 }
 
 add_shortcode('budget_buddy', 'bb_tracker_shortcode');
+
+
+register_activation_hook(__FILE__, 'bb_create_budget_buddy_page');
+
+function bb_create_budget_buddy_page() {
+    // Check if the page already exists
+    $page = get_page_by_path('budget-buddy');
+
+    if (!$page) {
+        // Create the page
+        $page_data = array(
+            'post_title'     => 'Budget Buddy',
+            'post_name'      => 'budget-buddy',
+            'post_content'   => '[budget_buddy]', // Use the shortcode
+            'post_status'    => 'publish',
+            'post_type'      => 'page',
+            'post_author'    => 1,
+        );
+
+        wp_insert_post($page_data);
+    }
+}
+
 
 add_filter('body_class', 'bb_add_body_class_if_shortcode_used');
 function bb_add_body_class_if_shortcode_used($classes)
