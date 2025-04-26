@@ -1,6 +1,28 @@
 <?php
 
 // Function to add a transaction (income/expense)
+function bb_handle_ajax_add_transaction() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Please log in to add a transaction.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'report_nonce');
+
+    $type = $_POST['type'] ?? '';
+    $amount = $_POST['amount'] ?? 0;
+    $description = $_POST['description'] ?? '';
+    $date = $_POST['date'] ?? '';
+
+    $result = bb_add_transaction($type, $amount, $description, $date);
+
+    if ($result) {
+        wp_send_json_success(['message' => 'Transaction added successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to add transaction.']);
+    }
+}
+
+// Function to add a transaction (income/expense)
 function bb_add_transaction($type, $amount, $description, $date)
 {
     global $wpdb;
@@ -112,60 +134,137 @@ function bb_get_monthly_plans($month)
 }
 
 
-function bb_update_plan_status($id, $new_status)
-{
+function bb_ajax_add_plan() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to add a plan.']);
+    }
+
+    // Verify nonce
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    // Sanitize inputs
+    $plan_text  = sanitize_text_field($_POST['plan_text'] ?? '');
+    $amount     = floatval($_POST['amount'] ?? 0);
+    $plan_month = sanitize_text_field($_POST['plan_month'] ?? '');
+
+    if (empty($plan_text) || empty($amount) || empty($plan_month)) {
+        wp_send_json_error(['message' => 'All fields are required.']);
+    }
+
     global $wpdb;
     $table = $wpdb->prefix . 'bb_monthly_plans';
     $user_id = get_current_user_id();
 
-    $wpdb->update($table, ['status' => $new_status], ['id' => $id, 'user_id' => $user_id]);
+    $inserted = $wpdb->insert($table, [
+        'user_id'    => $user_id,
+        'plan_text'  => $plan_text,
+        'amount'     => $amount,
+        'plan_month' => $plan_month,
+        'status'     => 'pending',
+    ], ['%d', '%s', '%f', '%s', '%s']);
+
+    if ($inserted) {
+        wp_send_json_success(['message' => 'Plan added successfully.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to add plan.']);
+    }
 }
 
 
 
-function bb_handle_transaction_delete($id)
-{
-
+function bb_ajax_update_plan_status() {
     if (!is_user_logged_in()) {
-        return; // prevent unauthenticated access
+        wp_send_json_error(['message' => 'You must be logged in to update plan status.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    $plan_id = intval($_POST['plan_id'] ?? 0);
+    $new_status = sanitize_text_field($_POST['status'] ?? '');
+
+    if (!$plan_id || !$new_status) {
+        wp_send_json_error(['message' => 'Missing plan ID or status.']);
     }
 
     global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
 
+    $updated = $wpdb->update(
+        $table,
+        ['status' => $new_status],
+        ['id' => $plan_id, 'user_id' => $user_id],
+        ['%s'],
+        ['%d', '%d']
+    );
+
+    if ($updated !== false) {
+        wp_send_json_success(['message' => 'Plan status updated.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to update plan status.']);
+    }
+}
+
+function bb_ajax_delete_transaction() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to delete transactions.']);
+    }
+    
+    // Verify nonce
+    check_ajax_referer('bb_report_nonce', 'security');
+    
+    // Get transaction ID
+    $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;
+    
+    if (!$transaction_id) {
+        wp_send_json_error(['message' => 'Invalid transaction ID.']);
+    }
+    
+    // Delete the transaction
+    global $wpdb;
     $table = $wpdb->prefix . 'bb_transactions';
     $user_id = get_current_user_id();
-
-    // Delete transaction if it belongs to the user
-    $deleted = $wpdb->delete($table, ['id' => $id, 'user_id' => $user_id]);
-
-    if ($deleted !== false) {
-        wp_redirect(home_url('/budget'));
-        exit;
+    
+    $result = $wpdb->delete(
+        $table,
+        [
+            'id' => $transaction_id,
+            'user_id' => $user_id // Security: ensure user can only delete their own transactions
+        ],
+        ['%d', '%d']
+    );
+    
+    if ($result !== false) {
+        wp_send_json_success(['message' => 'Transaction deleted successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete transaction. Please try again.']);
     }
 }
 
-
-
-
-
-function bb_handle_plan_delete($id)
-{
-
+function bb_ajax_delete_plan() {
     if (!is_user_logged_in()) {
-        return; // prevent unauthenticated access
+        wp_send_json_error(['message' => 'You must be logged in to delete plans.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    $plan_id = intval($_POST['plan_id'] ?? 0);
+    if (!$plan_id) {
+        wp_send_json_error(['message' => 'Invalid plan ID.']);
     }
 
     global $wpdb;
-
     $table = $wpdb->prefix . 'bb_monthly_plans';
     $user_id = get_current_user_id();
 
-    // Delete transaction if it belongs to the user
-    $deleted = $wpdb->delete($table, ['id' => $id, 'user_id' => $user_id]);
+    $deleted = $wpdb->delete($table, ['id' => $plan_id, 'user_id' => $user_id], ['%d', '%d']);
 
     if ($deleted !== false) {
-        wp_redirect(home_url('/budget'));
-        exit;
+        wp_send_json_success(['message' => 'Plan deleted successfully.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete plan.']);
     }
 }
 
@@ -250,4 +349,34 @@ function bb_get_monthly_summary($month) {
         'transaction_count' => intval($transaction_count),
         'month_name' => date('F Y', strtotime($month))
     ];
+}
+
+
+/**
+ * AJAX handler for monthly report
+ */
+function bb_ajax_get_monthly_report()
+{
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bb_report_nonce')) {
+        wp_send_json_error('Security check failed');
+    }
+
+    if (!isset($_POST['month']) || empty($_POST['month'])) {
+        wp_send_json_error('Missing month parameter');
+    }
+
+    $month = sanitize_text_field($_POST['month']);
+    $summary = bb_get_monthly_summary($month);
+
+    wp_send_json_success($summary);
+}
+
+function bb_update_plan_status($id, $new_status)
+{
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    $wpdb->update($table, ['status' => $new_status], ['id' => $id, 'user_id' => $user_id]);
 }

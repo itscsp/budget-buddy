@@ -1,38 +1,5 @@
 <?php
 
-
-// --- Handle adding a plan ---
-if (isset($_POST['bb_add_plan']) && is_user_logged_in()) {
-    bb_add_monthly_plan($_POST['plan_month'], $_POST['plan_text'], $_POST['plan_amount']);
-    set_transient('bb_flash_message_' . get_current_user_id(), 'Plan added!', 30);
-    wp_redirect($_SERVER['REQUEST_URI']);
-    exit;
-}
-
-// --- Handle updating a plan's status ---
-if (isset($_POST['bb_update_plan_status']) && is_user_logged_in()) {
-    bb_update_plan_status($_POST['plan_id'], $_POST['new_status']);
-    set_transient('bb_flash_message_' . get_current_user_id(), 'Plan updated!', 30);
-    wp_redirect($_SERVER['REQUEST_URI']);
-    exit;
-}
-
-if (isset($_POST['bb_delete_plan']) && is_user_logged_in()) {
-    bb_handle_plan_delete($_POST['plan_id']);
-    set_transient('bb_flash_message_' . get_current_user_id(), 'Plan deleted!', 30);
-    wp_redirect($_SERVER['REQUEST_URI']);
-    exit;
-}
-
-
-// --- Display transient message (if exists) ---
-$bb_flash_message = get_transient('bb_flash_message_' . get_current_user_id());
-if ($bb_flash_message) {
-    echo '<div class="updated bb-alert"><p>' . esc_html($bb_flash_message) . '</p></div>';
-    delete_transient('bb_flash_message_' . get_current_user_id());
-}
-
-
 // --- Get balance ---
 $balance = bb_get_user_balance();
 $balance_class = $balance >= 0 ? 'positive' : 'negative';
@@ -49,7 +16,7 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
             </svg>
         </span>
         <h4 class="bb-modal__heading">Add Income or Expense</h4>
-       <form class="bb-form">
+       <form class="bb-form" id="bb-add-transation-form">
     <input type="hidden" name="bb_form_submitted" value="1" />
 
     <label for="bb-type">Type:</label>
@@ -83,18 +50,18 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
             </svg>
         </span>
         <h4 class="bb-modal__heading">Add Monthly Plan</h4>
-        <form method="post" class="bb-form">
-            <input type="hidden" name="bb_add_plan" value="1" />
-            <input id="bb-plan-month" type="hidden" name="plan_month" required class="bb-form__input" value="<?php echo date('Y-m-d'); ?>" />
+       <form class="bb-form" id="bb-add-plan-form">
+    <input type="hidden" name="plan_month" id="plan_month" value="" />
 
-            <label for="bb-plan-amount">Planned Amount:</label>
-            <input id="bb-plan-amount" type="number" step="0.01" name="plan_amount" required class="bb-form__input" />
+    <label for="plan_amount">Planned Amount:</label>
+    <input id="plan_amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
 
-            <label for="bb-plan-text">Plan Text:</label>
-            <input id="bb-plan-text" type="text" name="plan_text" required class="bb-form__input" />
+    <label for="plan_text">Plan Text:</label>
+    <input id="plan_text" type="text" name="plan_text" required class="bb-form__input" />
 
-            <input type="submit" value="Save Plan" class="button button-primary bb-form__submit" />
-        </form>
+    <input type="submit" value="Save Plan" class="button button-primary bb-form__submit" />
+</form>
+
     </div>
 </div>
 
@@ -175,21 +142,19 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
                                         </div>
 
                                         <?php if ($plan->status !== 'done'): ?>
-                                            <form method="post" class="bb-plan-status-form">
-                                                <input type="hidden" name="bb_update_plan_status" value="1" />
-                                                <input type="hidden" name="plan_id" value="<?php echo esc_attr($plan->id); ?>" />
-                                                <input type="hidden" name="new_status" value="<?php echo $plan->status === 'pending' ? 'done' : 'pending'; ?>" />
-                                                <button type="submit" class="bb_btn">
+    <form class="bb-plan-status-form">
+        <input type="hidden" name="plan_id" value="<?php echo esc_attr($plan->id); ?>" />
+        <input type="hidden" name="status" value="<?php echo $plan->status === 'pending' ? 'done' : 'pending'; ?>" />
+        <button type="submit" class="bb_btn" title="Mark as Done">
+            <svg stroke="currentColor" fill="green" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
+                <path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm48.19 121.42 24.1 21.06-73.61 84.1-24.1-23.06zM191.93 342.63 121.37 272 144 249.37 214.57 320zm65 .79L185.55 272l22.64-22.62 47.16 47.21 111.13-127.17 24.1 21.06z"></path>
+            </svg>
+        </button>
+    </form>
+<?php endif; ?>
 
-                                                    <svg stroke="currentColor" fill="green" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48zm48.19 121.42 24.1 21.06-73.61 84.1-24.1-23.06zM191.93 342.63 121.37 272 144 249.37 214.57 320zm65 .79L185.55 272l22.64-22.62 47.16 47.21 111.13-127.17 24.1 21.06z"></path>
-                                                    </svg>
-
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
                                         <!-- Delete form -->
-                                        <form  onsubmit="return confirm('Are you sure you want to delete this plan?');" class="bb-plan-delete-form">
+                                        <form class="bb-plan-delete-form">
                                             <input type="hidden" name="bb_delete_plan" value="1" />
                                             <input type="hidden" name="plan_id" value="<?php echo esc_attr($plan->id); ?>" />
                                             <button type="submit">

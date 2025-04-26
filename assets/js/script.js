@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const planModal = document.getElementById("bb_plan_modal_overlay");
-  const planMonthInput = document.getElementById("bb-plan-month");
+  const planMonthInput = document.getElementById("plan_month");
 
   document.querySelectorAll(".bb-toggle-plan").forEach((button) => {
     button.addEventListener("click", function () {
@@ -255,7 +255,7 @@ function generateReportHTML(data, container) {
 
 document.addEventListener("DOMContentLoaded", () => {
   jQuery(function ($) {
-    $('.bb-form').on('submit', function (e) {
+    $('#bb-add-transation-form').on('submit', function (e) {
       e.preventDefault();
 
       const form = $(this);
@@ -278,68 +278,163 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     });
-  });
-});
+	  
+	  
+	 // Delete transation
+	 $('.delete-transaction-btn').on('click', function(e) {
+  e.preventDefault();
 
+  const button = this; // More readable than e.target
+  const transactionId = button.getAttribute('data-id');
 
-// Delete transaction via AJAX
-document.addEventListener("DOMContentLoaded", () => {
-  // Use event delegation for delete buttons (works for dynamically added elements too)
-  document.addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('delete-transaction-btn')) {
-      e.preventDefault();
-      
-      const transactionId = e.target.getAttribute('data-id');
-      
-      if (confirm('Are you sure you want to delete this transaction?')) {
-        // Prepare the data
-        const formData = new FormData();
-        formData.append('action', 'bb_delete_transaction');
-        formData.append('transaction_id', transactionId);
-        formData.append('security', bb_data.report_nonce);
-        
-        // Show loading state
-        e.target.textContent = 'Deleting...';
-        e.target.disabled = true;
-        
-        // Send AJAX request
-        fetch(bb_data.ajax_url, {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            // Find and remove the transaction element from the DOM
-            const transactionElement = e.target.closest('.bb-transaction');
-            transactionElement.style.opacity = '0';
-            setTimeout(() => {
-              transactionElement.remove();
-              // Display success message
-              const alertDiv = document.createElement('div');
-              alertDiv.className = 'updated bb-alert';
-              alertDiv.innerHTML = `<p>${data.data.message}</p>`;
-              document.querySelector('.bb-container').prepend(alertDiv);
-              
-              // Auto-remove the alert after 3 seconds
-              setTimeout(() => {
-                alertDiv.style.opacity = '0';
-                setTimeout(() => alertDiv.remove(), 500);
-              }, 3000);
-            }, 300);
-          } else {
-            alert(data.data.message || 'Error deleting transaction');
-            e.target.textContent = 'Delete';
-            e.target.disabled = false;
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('Error deleting transaction. Please try again.');
-          e.target.textContent = 'Delete';
-          e.target.disabled = false;
-        });
+  if (confirm('Are you sure you want to delete this transaction?')) {
+    // Prepare the data
+    const formData = new FormData();
+    formData.append('action', 'bb_delete_transaction');
+    formData.append('transaction_id', transactionId);
+    formData.append('security', bb_data.report_nonce);
+
+    // Show loading state
+    button.textContent = 'Deleting...';
+    button.disabled = true;
+
+    // Send AJAX request
+    fetch(bb_data.ajax_url, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Find and remove the transaction element from the DOM
+        const transactionElement = button.closest('.bb-transaction');
+        transactionElement.style.opacity = '0';
+        setTimeout(() => {
+          transactionElement.remove();
+          // Display success message
+          const alertDiv = document.createElement('div');
+          alertDiv.className = 'updated bb-alert';
+          alertDiv.innerHTML = `<p>${data.data.message}</p>`;
+          document.querySelector('.bb-container').prepend(alertDiv);
+          
+          // Auto-remove the alert after 3 seconds
+          setTimeout(() => {
+            alertDiv.style.opacity = '0';
+            setTimeout(() => alertDiv.remove(), 500);
+          }, 3000);
+        }, 300);
+      } else {
+        alert(data.data.message || 'Error deleting transaction');
+        button.textContent = 'Delete';
+        button.disabled = false;
       }
-    }
-  });
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error deleting transaction. Please try again.');
+      button.textContent = 'Delete';
+      button.disabled = false;
+    });
+  }
 });
+
+	  $('#bb-add-plan-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const data = {
+            action: 'bb_add_plan',
+            security: bb_data.report_nonce,
+            plan_text: $('#plan_text').val(),
+            amount: $('#plan_amount').val(),
+            plan_month: $('#plan_month').val(),
+        };
+
+        console.log('Data:',data)
+        $.post(bb_data.ajax_url, data, function (response) {
+            if (response.success) {
+                alert(response.data.message);
+                location.reload(); // or update UI dynamically
+            } else {
+                alert(response.data.message);
+            }
+        });
+    });
+
+      $('.bb-plan-delete-form').on('submit', function(e) {
+          e.preventDefault();
+  
+          if (!confirm('Are you sure you want to delete this plan?')) {
+              return;
+          }
+  
+          var $form = $(this);
+          var formData = new FormData(this);
+          formData.append('action', 'bb_delete_plan');
+          formData.append('security', bb_data.report_nonce); // localized nonce
+  
+          $.ajax({
+              url: bb_data.ajax_url,
+              method: 'POST',
+              data: formData,
+              processData: false,
+              contentType: false,
+              success: function(response) {
+                  if (response.success) {
+                      alert('Plan deleted successfully.');
+  
+                      // Remove the plan container
+                      var $planContainer = $form.closest('.bb-plan-item');
+                      if ($planContainer.length) {
+                          $planContainer.remove();
+                      }
+                  } else {
+                      alert(response.data.message || 'Failed to delete plan.');
+                  }
+              },
+              error: function(xhr, status, error) {
+                  console.error('AJAX Error:', error);
+                  alert('An error occurred. Please try again.');
+              }
+          });
+      });
+
+        $('.bb-plan-status-form').on('submit', function(e) {
+            e.preventDefault();
+    
+            const $form = $(this);
+            const formData = new FormData(this);
+    
+            formData.append('action', 'bb_update_plan_status');
+            formData.append('security', bb_data.report_nonce); // Make sure this nonce is localized
+    
+            $.ajax({
+                url: bb_data.ajax_url,
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert('Plan status updated.');
+                        // Optional: Reload the page or update the DOM accordingly
+                        location.reload();
+                    } else {
+                        alert(response.data.message || 'Failed to update status.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating status.');
+                }
+            });
+        });
+    });
+    
+    
+  
+
+  });
+
+
+
+

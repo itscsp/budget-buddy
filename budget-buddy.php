@@ -26,6 +26,8 @@ function bb_enqueue_assets()
         'ajax_url' => admin_url('admin-ajax.php'),
         'report_nonce' => wp_create_nonce('bb_report_nonce')
     ));
+	
+	
 }
 
 
@@ -107,8 +109,8 @@ function bb_create_budget_buddy_page() {
     if (!$page) {
         // Create the page
         $page_data = array(
-            'post_title'     => 'Budget Buddy',
-            'post_name'      => 'budget-buddy',
+            'post_title'     => 'Budget',
+            'post_name'      => 'budget',
             'post_content'   => '[budget_buddy]', // Use the shortcode
             'post_status'    => 'publish',
             'post_type'      => 'page',
@@ -154,4 +156,237 @@ function bb_ajax_get_monthly_report()
     $summary = bb_get_monthly_summary($month);
 
     wp_send_json_success($summary);
+}
+
+// Add this to ensure the AJAX handler is registered properly for both logged-in and non-logged-in users
+add_action('wp_ajax_bb_add_transaction', 'bb_handle_ajax_add_transaction');
+add_action('wp_ajax_nopriv_bb_add_transaction', 'bb_handle_ajax_add_transaction');
+
+function bb_handle_ajax_add_transaction() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Please log in to add a transaction.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'report_nonce');
+
+    $type = $_POST['type'] ?? '';
+    $amount = $_POST['amount'] ?? 0;
+    $description = $_POST['description'] ?? '';
+    $date = $_POST['date'] ?? '';
+
+    $result = bb_add_transaction($type, $amount, $description, $date);
+
+    if ($result) {
+        wp_send_json_success(['message' => 'Transaction added successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to add transaction.']);
+    }
+}
+
+
+
+// AJAX handler for deleting transactions
+add_action('wp_ajax_bb_delete_transaction', 'bb_ajax_delete_transaction');
+
+function bb_ajax_delete_transaction() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to delete transactions.']);
+    }
+    
+    // Verify nonce
+    check_ajax_referer('bb_report_nonce', 'security');
+    
+    // Get transaction ID
+    $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;
+    
+    if (!$transaction_id) {
+        wp_send_json_error(['message' => 'Invalid transaction ID.']);
+    }
+    
+    // Delete the transaction
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_transactions';
+    $user_id = get_current_user_id();
+    
+    $result = $wpdb->delete(
+        $table,
+        [
+            'id' => $transaction_id,
+            'user_id' => $user_id // Security: ensure user can only delete their own transactions
+        ],
+        ['%d', '%d']
+    );
+    
+    if ($result !== false) {
+        wp_send_json_success(['message' => 'Transaction deleted successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete transaction. Please try again.']);
+    }
+}
+
+
+
+
+
+// AJAX handler for add plan
+add_action('wp_ajax_bb_add_plan', 'bb_ajax_bb_add_plan');
+
+
+
+function bb_ajax_bb_add_plan() {
+    // Check if user is logged in
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to delete transactions.']);
+    }
+    
+    // Verify nonce
+    check_ajax_referer('bb_report_nonce', 'security');
+    
+    // Get transaction ID
+    $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;
+    
+    if (!$transaction_id) {
+        wp_send_json_error(['message' => 'Invalid transaction ID.']);
+    }
+    
+    // Delete the transaction
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_transactions';
+    $user_id = get_current_user_id();
+    
+    $result = $wpdb->delete(
+        $table,
+        [
+            'id' => $transaction_id,
+            'user_id' => $user_id // Security: ensure user can only delete their own transactions
+        ],
+        ['%d', '%d']
+    );
+    
+    if ($result !== false) {
+        wp_send_json_success(['message' => 'Transaction deleted successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete transaction. Please try again.']);
+    }
+}
+
+// ========================
+// Register AJAX handlers
+// ========================
+
+// Add Transaction
+add_action('wp_ajax_bb_add_transaction', 'bb_handle_ajax_add_transaction');
+add_action('wp_ajax_nopriv_bb_add_transaction', 'bb_handle_ajax_add_transaction');
+function bb_handle_ajax_add_transaction() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'Please log in to add a transaction.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'report_nonce');
+
+    $type = sanitize_text_field($_POST['type'] ?? '');
+    $amount = floatval($_POST['amount'] ?? 0);
+    $description = sanitize_text_field($_POST['description'] ?? '');
+    $date = sanitize_text_field($_POST['date'] ?? '');
+
+    $result = bb_add_transaction($type, $amount, $description, $date);
+
+    if ($result) {
+        wp_send_json_success(['message' => 'Transaction added successfully!']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to add transaction.']);
+    }
+}
+
+
+// Delete Transaction
+add_action('wp_ajax_bb_delete_transaction', 'bb_ajax_delete_transaction');
+function bb_ajax_delete_transaction() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to delete transactions.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    $transaction_id = intval($_POST['transaction_id'] ?? 0);
+    if (!$transaction_id) {
+        wp_send_json_error(['message' => 'Invalid transaction ID.']);
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_transactions';
+    $user_id = get_current_user_id();
+
+    $deleted = $wpdb->delete($table, ['id' => $transaction_id, 'user_id' => $user_id], ['%d', '%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success(['message' => 'Transaction deleted successfully.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete transaction.']);
+    }
+}
+
+
+// Delete Plan
+add_action('wp_ajax_bb_delete_plan', 'bb_ajax_delete_plan');
+function bb_ajax_delete_plan() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to delete plans.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    $plan_id = intval($_POST['plan_id'] ?? 0);
+    if (!$plan_id) {
+        wp_send_json_error(['message' => 'Invalid plan ID.']);
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    $deleted = $wpdb->delete($table, ['id' => $plan_id, 'user_id' => $user_id], ['%d', '%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success(['message' => 'Plan deleted successfully.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to delete plan.']);
+    }
+}
+
+
+// Update Plan Status
+add_action('wp_ajax_bb_update_plan_status', 'bb_ajax_update_plan_status');
+function bb_ajax_update_plan_status() {
+    if (!is_user_logged_in()) {
+        wp_send_json_error(['message' => 'You must be logged in to update plan status.']);
+    }
+
+    check_ajax_referer('bb_report_nonce', 'security');
+
+    $plan_id = intval($_POST['plan_id'] ?? 0);
+    $new_status = sanitize_text_field($_POST['status'] ?? '');
+
+    if (!$plan_id || !$new_status) {
+        wp_send_json_error(['message' => 'Missing plan ID or status.']);
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    $updated = $wpdb->update(
+        $table,
+        ['status' => $new_status],
+        ['id' => $plan_id, 'user_id' => $user_id],
+        ['%s'],
+        ['%d', '%d']
+    );
+
+    if ($updated !== false) {
+        wp_send_json_success(['message' => 'Plan status updated.']);
+    } else {
+        wp_send_json_error(['message' => 'Failed to update plan status.']);
+    }
 }
