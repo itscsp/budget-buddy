@@ -1,11 +1,7 @@
 {
   "name": "BudgetBuddy",
-  "version": "0.1",
   "description": "A plugin to manage user income and expense",
-  "author": {
-    "name": "Chethan S Poojary",
-    "url": "https://chethanspoojary.com/"
-  },
-  "plugin_uri": "https://github.com/chethanpoojary/budgetbuddy",
-  "license": "GPL-2.0-or-later"
+  "version": "0.1",
+  "author": "Chethan S Poojary",
+  "homepage": "https://chethanspoojary.com/"
 }

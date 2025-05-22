@@ -10,6 +10,19 @@
 
 defined('ABSPATH') || exit;
 
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
+
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+$updateChecker = PucFactory::buildUpdateChecker(
+    'https://github.com/itscsp/budget-buddy/',
+    __FILE__,
+    'budget-buddy'
+);
+
+
 // Enqueue custom styles and scripts
 add_action('wp_enqueue_scripts', 'bb_enqueue_assets');
 
