@@ -1,0 +1,41 @@
+name: BudgetBuddy CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  php-lint:
+    name: PHP Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Validate PHP Syntax
+        run: |
+          find . -name "*.php" -print0 | xargs -0 -n1 php -l
+
+  manifest-check:
+    name: Manifest File Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check for manifest.json
+        run: |
+          if [ -f "./manifest.json" ]; then
+            echo "manifest.json found."
+          else
+            echo "❌ manifest.json not found!" && exit 1
+          fi
