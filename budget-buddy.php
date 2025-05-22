@@ -1,27 +1,42 @@
 <?php
-
 /**
  * Plugin Name: BudgetBuddy
  * Description: A plugin to manage user income and expense
  * Version: 0.1
  * Author: Chethan S Poojary
- * Author URL: https://chethanspoojary.com/
+ * Author URI: https://chethanspoojary.com/
  */
 
 defined('ABSPATH') || exit;
 
+// Load Composer autoloader
 if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
     require_once __DIR__ . '/vendor/autoload.php';
 }
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
+// GitHub-based plugin update checker
 $updateChecker = PucFactory::buildUpdateChecker(
     'https://github.com/itscsp/budget-buddy/',
     __FILE__,
     'budget-buddy'
 );
 
+// Optional: specify branch (if not using "main")
+$updateChecker->setBranch('main');
+
+function custom_craft_component_init() {
+
+    if (is_admin()) {
+        PucFactory::buildUpdateChecker(
+            'https://raw.githubusercontent.com/itscsp/budget-buddy/main/manifest.json',
+            __FILE__,
+            'custom-craft-component'
+        );
+    }
+}
+add_action('plugins_loaded', 'custom_craft_component_init');
 
 // Enqueue custom styles and scripts
 add_action('wp_enqueue_scripts', 'bb_enqueue_assets');
