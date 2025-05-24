@@ -104,6 +104,8 @@ button#bb_add_action {
     position: relative;
     animation: fadeInUp 0.3s ease-out;
     margin: auto;
+    overflow: scroll;
+    max-height: 570px;
 }
 
 .bb-transation_modal__close,
@@ -125,7 +127,7 @@ button#bb_add_action {
 }
 
 .bb-modal__heading {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-size: 22px;
     font-weight: 700;
     color: #333;
@@ -136,7 +138,7 @@ button#bb_add_action {
 .bb-form label {
     display: block;
     font-weight: 600;
-    margin: 15px 0 5px;
+    margin: 5px 0 0;
     color: #000;
 }
 
@@ -623,6 +625,8 @@ fieldset.budget-class {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    padding: 5px 10px 5px;
 }
 
 fieldset.budget-class > legend {
