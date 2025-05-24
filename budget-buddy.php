@@ -3,7 +3,7 @@
 /**
  * Plugin Name: BudgetBuddy
  * Description: A plugin to manage user income and expense
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Chethan S Poojary
  * Author URL: https://chethanspoojary.com/
  */
@@ -63,7 +63,7 @@ function bb_run_plugin() {
         PucFactory::buildUpdateChecker(
             'https://raw.githubusercontent.com/itscsp/budget-buddy/main/manifest.json',
             __FILE__,
-            'csp-hello-world'
+            'budget-buddy'
         );
     }
 }
