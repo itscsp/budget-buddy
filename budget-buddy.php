@@ -52,6 +52,23 @@ function bb_enqueue_admin_assets($hook) {
 include_once plugin_dir_path(__FILE__) . 'includes/bb-admin-pages.php';
 include_once plugin_dir_path(__FILE__) . 'includes/bb-functions.php';
 
+require_once plugin_dir_path(__FILE__) . 'plugin-update-checker/plugin-update-checker.php';
+
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+// Initialize the plugin
+function bb_run_plugin() {
+    
+    if (is_admin()) {
+        PucFactory::buildUpdateChecker(
+            'https://raw.githubusercontent.com/itscsp/budget-buddy/main/manifest.json',
+            __FILE__,
+            'csp-hello-world'
+        );
+    }
+}
+add_action( 'plugins_loaded', 'bb_run_plugin' );
+
 // Activation Hook: Create database table on plugin activation
 register_activation_hook(__FILE__, 'bb_install');
 
