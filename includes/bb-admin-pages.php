@@ -5,8 +5,8 @@ add_action('admin_menu', 'bb_admin_menu');
 
 function bb_admin_menu() {
     add_menu_page(
-        'BudgetBuddy',
-        'BudgetBuddy',
+        'Budget Buddy',
+        'Budget Buddy',
         'manage_options',
         'budget_buddy',
         'bb_render_main_page',
