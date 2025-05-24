@@ -73,7 +73,7 @@ function bb_display_categories() {
             <tr>
                 <th>Category Name</th>
                 <th>Percentage (%)</th>
-                <th>Created At</th>
+        
             </tr>
         </thead>
         <tbody>
@@ -82,7 +82,7 @@ function bb_display_categories() {
                     <tr>
                         <td><?php echo esc_html($category->category_name); ?></td>
                         <td><?php echo esc_html($category->percentage); ?></td>
-                        <td><?php echo esc_html($category->created_at); ?></td>
+                        
                     </tr>
                 <?php endforeach; ?>
             <?php else : ?>
