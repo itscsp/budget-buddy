@@ -1,8 +1,47 @@
 <?php
 
+// Ensure user is logged in (already checked in shortcode, but for safety)
+if (!is_user_logged_in()) {
+    return;
+}
+
+// Fetch categories for the current user
+global $wpdb;
+$user_id = get_current_user_id();
+$categories_table = $wpdb->prefix . 'bb_budget_categories';
+
+// --- Handle updating a plan's status ---
+if (isset($_POST['bb_update_plan_status']) && is_user_logged_in()) {
+    bb_update_plan_status($_POST['plan_id'], $_POST['new_status']);
+    set_transient('bb_flash_message_' . get_current_user_id(), 'Plan updated!', 30);
+    wp_redirect($_SERVER['REQUEST_URI']);
+    exit;
+}
+
+if (isset($_POST['bb_delete_plan']) && is_user_logged_in()) {
+    bb_handle_plan_delete($_POST['plan_id']);
+    set_transient('bb_flash_message_' . get_current_user_id(), 'Plan deleted!', 30);
+    wp_redirect($_SERVER['REQUEST_URI']);
+    exit;
+}
+
+
+// --- Display transient message (if exists) ---
+$bb_flash_message = get_transient('bb_flash_message_' . get_current_user_id());
+if ($bb_flash_message) {
+    echo '<div class="updated bb-alert"><p>' . esc_html($bb_flash_message) . '</p></div>';
+    delete_transient('bb_flash_message_' . get_current_user_id());
+}
+
+
 // --- Get balance ---
 $balance = bb_get_user_balance();
 $balance_class = $balance >= 0 ? 'positive' : 'negative';
+
+$categories = $wpdb->get_results(
+    $wpdb->prepare("SELECT * FROM $categories_table WHERE user_id = %d", $user_id)
+);
+
 ?>
 
 
@@ -16,27 +55,52 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
             </svg>
         </span>
         <h4 class="bb-modal__heading">Add Income or Expense</h4>
-       <form class="bb-form" id="bb-add-transation-form">
-    <input type="hidden" name="bb_form_submitted" value="1" />
+       <form class="bb-form" id="bb-add-transaction-form">
+            <input type="hidden" name="bb_form_submitted" value="1" />
 
-    <label for="bb-type">Type:</label>
-    <select id="bb-type" name="type" class="bb-form__input">
-        <option value="expense">Expense</option>
-        <option value="loan">Loan</option>
-        <option value="income">Income</option>
-    </select>
+            <label for="bb-type">Type:</label>
+            <select id="bb-type" name="type" class="bb-form__input">
+                <option value="expense">Expense</option>
+                <option value="loan">Loan</option>
+                <option value="income">Income</option>
+            </select>
+            <fieldset class="budget-class">
+                <legend>Choose budget group:</legend>
+                <?php if ($categories) : ?>
+                    <?php foreach ($categories as $index => $category) : ?>
+                        <div class="budget-class-type">
+                            <input 
+                                type="radio" 
+                                id="budget-<?php echo esc_attr($category->id); ?>" 
+                                name="budget-class" 
+                                value="<?php echo esc_attr($category->id); ?>" 
+                                <?php checked($index, 0); ?>
+                            />
+                            <label for="budget-<?php echo esc_attr($category->id); ?>">
+                                <?php echo esc_html(esc_html($category->percentage) . '%'); ?>
+                            </label>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <div class="budget-class-type">
+                        <p>No budget categories found. Please <a href="<?php echo admin_url('admin.php?page=budget_buddy'); ?>">add categories</a> in the admin panel.</p>
+                    </div>
+                <?php endif; ?>
+            </fieldset>
 
-    <label for="bb-amount">Amount:</label>
-    <input id="bb-amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
+            <label for="bb-amount">Amount:</label>
+            <input id="bb-amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
 
-    <label for="bb-description">Description:</label>
-    <input id="bb-description" type="text" name="description" class="bb-form__input" />
+            <label for="bb-description">Description:</label>
+            <input id="bb-description" type="text" name="description" class="bb-form__input" />
 
-    <label for="bb-date">Date:</label>
-    <input id="bb-date" type="date" name="date" required value="<?php echo date('Y-m-d'); ?>" class="bb-form__input" />
+            <label for="bb-date">Date:</label>
+            <input id="bb-date" type="date" name="date" required value="<?php echo date('Y-m-d'); ?>" class="bb-form__input" />
 
-    <input type="submit" value="Add Transaction" class="button button-primary bb-form__submit" />
-</form>
+            
+
+            <input type="submit" value="Add Transaction" class="button button-primary bb-form__submit" />
+        </form>
     </div>
 </div>
 
@@ -185,23 +249,24 @@ $balance_class = $balance >= 0 ? 'positive' : 'negative';
                                     <div class="bb-transaction__main">
                                         <date class="bb-transaction__date"><?php echo esc_html(date('d', strtotime($tx->date))); ?></date>
                                         <div class="bb-transaction__amount-wrapper">
-                                            <p class="bb-transaction__amount"><?php echo esc_attr($tx->type === 'income' ? '+' : '-' ); ?> ₹<?php echo esc_html(number_format($tx->amount, 2)); ?></p>
+                                            <p class="bb-transaction__amount"><?php echo esc_attr($tx->type === 'income' ? '+' : '-'); ?> ₹<?php echo esc_html(number_format($tx->amount, 2)); ?></p>
                                             <button class="bb-expand-btn"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="32px" width="32px" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M256 294.1L383 167c9.4-9.4 24.6-9.4 33.9 0s9.3 24.6 0 34L273 345c-9.1 9.1-23.7 9.3-33.1.7L95 201.1c-4.7-4.7-7-10.9-7-17s2.3-12.3 7-17c9.4-9.4 24.6-9.4 33.9 0l127.1 127z"></path>
-                                                </svg></button>
+                                                <path d="M256 294.1L383 167c9.4-9.4 24.6-9.4 33.9 0s9.3 24.6 0 34L273 345c-9.1 9.1-23.7 9.3-33.1.7L95 201.1c-4.7-4.7-7-10.9-7-17s2.3-12.3 7-17c9.4-9.4 24.6-9.4 33.9 0l127.1 127z"></path>
+                                            </svg></button>
                                         </div>
                                     </div>
 
-                                    <div id="<?php echo esc_attr($row_id); ?>" class="bb-transaction__details" style="display: none;">
+                                    <div id="bb-transaction-details-<?php echo esc_attr($tx->id); ?>" class="bb-transaction__details" style="display: none;">
                                         <strong>Type:</strong> <?php echo ucfirst(esc_html($tx->type)); ?><br>
                                         <strong>Description:</strong> <?php echo esc_html($tx->description); ?><br>
+                                        <strong>Category:</strong> <?php echo esc_html($tx->category_name ?: 'Uncategorized'); ?><br>
                                         <strong>Date:</strong> <?php echo esc_html(date('F j, Y', strtotime($tx->date))); ?><br><br>
 
                                         <!-- Delete form -->
                                         <form class="bb-delete-form">
-    <input type="hidden" name="transaction_id" value="<?php echo esc_attr($tx->id); ?>" />
-    <button type="button" class="bb-delete-btn delete-transaction-btn" data-id="<?php echo esc_attr($tx->id); ?>">Delete</button>
-</form>
+                                            <input type="hidden" name="transaction_id" value="<?php echo esc_attr($tx->id); ?>" />
+                                            <button type="button" class="bb-delete-btn delete-transaction-btn" data-id="<?php echo esc_attr($tx->id); ?>">Delete</button>
+                                        </form>
                                     </div>
                                 </div>
                             <?php endforeach; ?>

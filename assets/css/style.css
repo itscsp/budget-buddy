@@ -574,3 +574,78 @@ button#bb-print-report {
         text-transform: capitalize;
         cursor: pointer;
 }
+
+
+button.bb-percent-button {
+    padding: 5px 25px;
+    font-size: 16px;
+    outline: none;
+    border-radius: 0px;
+    border: 1px solid;
+    background: transparent;
+    text-transform: capitalize;
+    color: #000;
+    cursor: pointer;
+}
+
+
+button.bb-percent-button.active,
+button.bb-percent-button:hover{
+    background: var(--bg-body);
+    color: var(--accent);
+}
+
+.bb-percentage-buttons {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+fieldset.budget-class > legend {
+    color: #000;
+}
+
+.budget-class-type {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border: 2px solid var(--accent);
+    padding: 5px 17px;
+}
+
+.budget-class-type > label {
+    margin: 0;
+}
+
+fieldset.budget-class {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+fieldset.budget-class > legend {
+    color: #000;
+}
+
+.budget-class-type > input {
+    display: none;
+}
+
+.budget-class-type {
+    margin-bottom: 10px;
+}
+
+.budget-class-type.active {
+    background: #000;
+}
+
+.budget-class-type.active > label {
+    color: #fff;
+}
+
+.budget-class-type label {
+    cursor: pointer;
+    margin-left: 5px;
+}
