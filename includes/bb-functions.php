@@ -1,408 +1,286 @@
 <?php
+/**
+ * BudgetBuddy Functions
+ * Core functionality for handling budget-related operations
+ */
 
-// Function to add a transaction (income/expense)
-function bb_handle_ajax_add_transaction() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'Please log in to add a transaction.']);
+defined('ABSPATH') || exit;
+
+class BudgetBuddyFunctions {
+    private $wpdb;
+    private $user_id;
+    private $transactions_table;
+    private $plans_table;
+    private $categories_table;
+
+    public function __construct() {
+        global $wpdb;
+        $this->wpdb = $wpdb;
+        $this->user_id = get_current_user_id();
+        $this->transactions_table = $wpdb->prefix . 'bb_transactions';
+        $this->plans_table = $wpdb->prefix . 'bb_monthly_plans';
+        $this->categories_table = $wpdb->prefix . 'bb_budget_categories';
+
+        // Register AJAX handlers
+        add_action('wp_ajax_bb_add_transaction', [$this, 'handle_ajax_add_transaction']);
+        add_action('wp_ajax_bb_delete_transaction', [$this, 'ajax_delete_transaction']);
+        add_action('wp_ajax_bb_add_plan', [$this, 'ajax_add_plan']);
+        add_action('wp_ajax_bb_delete_plan', [$this, 'ajax_delete_plan']);
+        add_action('wp_ajax_bb_get_monthly_report', [$this, 'ajax_get_monthly_report']);
+        add_action('wp_ajax_bb_update_plan_status', [$this, 'ajax_update_plan_status']);
     }
 
-    // Check nonce (use bb_transaction_nonce to match the form)
-    check_ajax_referer('bb_transaction_nonce', 'bb_transaction_nonce');
-
-    $type = $_POST['type'] ?? '';
-    $amount = $_POST['amount'] ?? 0;
-    $description = $_POST['description'] ?? '';
-    $date = $_POST['date'] ?? '';
-    $category_id = $_POST['category_id'] ?? null; // Expect category_id from form
-
-    // Validate category_id
-    if (!empty($category_id)) {
-        global $wpdb;
-        $user_id = get_current_user_id();
-        $categories_table = $wpdb->prefix . 'bb_budget_categories';
-        $category_exists = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT COUNT(*) FROM $categories_table WHERE id = %d AND user_id = %d",
-                intval($category_id),
-                $user_id
+    public function get_user_balance() {
+        $results = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT type, amount FROM {$this->transactions_table} WHERE user_id = %d",
+                $this->user_id
             )
         );
 
-        if (!$category_exists) {
-            wp_send_json_error(['message' => 'Invalid category selected.']);
+        $balance = 0;
+        foreach ($results as $row) {
+            if ($row->type === 'income') {
+                $balance += $row->amount;
+            } elseif (in_array($row->type, ['expense', 'loan'])) {
+                $balance -= $row->amount;
+            }
+        }
+
+        return $balance;
+    }
+
+    public function get_transactions_by_month() {
+        $results = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT t.*, c.category_name 
+                FROM {$this->transactions_table} t 
+                LEFT JOIN {$this->categories_table} c ON t.category_id = c.id 
+                WHERE t.user_id = %d 
+                ORDER BY t.date DESC",
+                $this->user_id
+            )
+        );
+
+        $transactions_by_month = [];
+        foreach ($results as $row) {
+            $month = date('Y-m', strtotime($row->date));
+            $transactions_by_month[$month][] = $row;
+        }
+
+        return $transactions_by_month;
+    }
+
+    public function get_monthly_plans($plan_month) {
+        return $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT * FROM {$this->plans_table} WHERE user_id = %d AND plan_month = %s",
+                $this->user_id,
+                $plan_month
+            )
+        );
+    }
+
+    public function get_monthly_plan_total($plan_month) {
+        $results = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                "SELECT SUM(amount) FROM {$this->plans_table} WHERE user_id = %d AND plan_month = %s",
+                $this->user_id,
+                $plan_month
+            )
+        );
+
+        return $results ? floatval($results) : 0;
+    }
+
+    public function handle_ajax_add_transaction() {
+        check_ajax_referer('bb_transaction_nonce', 'bb_transaction_nonce');
+
+        $type = sanitize_text_field($_POST['type'] ?? '');
+        $amount = floatval($_POST['amount'] ?? 0);
+        $description = sanitize_text_field($_POST['description'] ?? '');
+        $date = sanitize_text_field($_POST['date'] ?? date('Y-m-d'));
+        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : null;
+
+        if (!in_array($type, ['income', 'expense', 'loan']) || $amount <= 0) {
+            wp_send_json_error(['message' => 'Invalid transaction type or amount.']);
+        }
+
+        $result = $this->wpdb->insert(
+            $this->transactions_table,
+            [
+                'user_id' => $this->user_id,
+                'type' => $type,
+                'amount' => $amount,
+                'description' => $description,
+                'date' => $date,
+                'category_id' => $category_id
+            ],
+            ['%d', '%s', '%f', '%s', '%s', '%d']
+        );
+
+        if ($result) {
+            wp_send_json_success(['message' => 'Transaction added successfully!']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to add transaction.']);
         }
     }
 
-    $result = bb_add_transaction($type, $amount, $description, $date, $category_id);
+    public function ajax_delete_transaction() {
+        check_ajax_referer('bb_report_nonce', 'security');
 
-    if ($result) {
-        wp_send_json_success(['message' => 'Transaction added successfully!']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to add transaction.']);
-    }
-}
+        $transaction_id = intval($_POST['transaction_id'] ?? 0);
 
-// Function to add a transaction (income/expense)
-function bb_add_transaction($type, $amount, $description, $date, $category_id = null) {
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_transactions';
-
-    if (!is_user_logged_in()) {
-        return false;
-    }
-
-    $user_id = get_current_user_id();
-
-    $data = [
-        'user_id'     => $user_id,
-        'type'        => sanitize_text_field($type),
-        'amount'      => floatval($amount),
-        'description' => sanitize_text_field($description),
-        'date'        => sanitize_text_field($date),
-    ];
-
-    // Only include category_id if it's provided and numeric
-    if (!empty($category_id) && is_numeric($category_id)) {
-        $data['category_id'] = intval($category_id);
-    }
-
-    return $wpdb->insert($table, $data);
-}
-
-
-function bb_get_transactions_by_month()
-{
-   global $wpdb;
-    $user_id = get_current_user_id();
-    $transactions_table = $wpdb->prefix . 'bb_transactions';
-    $categories_table = $wpdb->prefix . 'bb_budget_categories';
-
-    // Query transactions with a LEFT JOIN to include category name
-    $query = $wpdb->prepare(
-        "SELECT t.*, c.category_name 
-         FROM $transactions_table t 
-         LEFT JOIN $categories_table c ON t.category_id = c.id 
-         WHERE t.user_id = %d 
-         ORDER BY t.date DESC",
-        $user_id
-    );
-
-    $results = $wpdb->get_results($query);
-
-    // Group transactions by month
-    $transactions_by_month = [];
-    foreach ($results as $tx) {
-        $month = date('Y-m', strtotime($tx->date));
-        if (!isset($transactions_by_month[$month])) {
-            $transactions_by_month[$month] = [];
+        if ($transaction_id <= 0) {
+            wp_send_json_error(['message' => 'Invalid transaction ID.']);
         }
-        $transactions_by_month[$month][] = $tx;
+
+        $result = $this->wpdb->delete(
+            $this->transactions_table,
+            ['id' => $transaction_id, 'user_id' => $this->user_id],
+            ['%d', '%d']
+        );
+
+        if ($result) {
+            wp_send_json_success(['message' => 'Transaction deleted successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to delete transaction or transaction not found.']);
+        }
     }
 
-    return $transactions_by_month;
-}
+    public function ajax_add_plan() {
+        check_ajax_referer('bb_report_nonce', 'security');
 
-// Function to get user's total balance
-function bb_get_user_balance()
-{
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_transactions';
+        $plan_text = sanitize_text_field($_POST['plan_text'] ?? '');
+        $amount = floatval($_POST['plan_amount'] ?? 0);
+        $plan_month = sanitize_text_field($_POST['plan_month'] ?? date('Y-m-01'));
 
-    if (!is_user_logged_in()) {
-        return 0;
+        if (empty($plan_text) || $amount <= 0) {
+            wp_send_json_error(['message' => 'Invalid plan text or amount.']);
+        }
+
+        $result = $this->wpdb->insert(
+            $this->plans_table,
+            [
+                'user_id' => $this->user_id,
+                'plan_text' => $plan_text,
+                'amount' => $amount,
+                'plan_month' => $plan_month,
+                'status' => 'pending',
+                'created_at' => current_time('mysql')
+            ],
+            ['%d', '%s', '%f', '%s', '%s', '%s']
+        );
+
+        if ($result) {
+            wp_send_json_success(['message' => 'Plan added successfully!']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to add plan.']);
+        }
     }
 
-    $user_id = get_current_user_id();
+    public function ajax_delete_plan() {
+        check_ajax_referer('bb_report_nonce', 'security');
 
-    $incomes = $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT SUM(amount) FROM $table WHERE user_id = %d AND type = 'income'",
-            $user_id
-        )
-    );
+        $plan_id = intval($_POST['plan_id'] ?? 0);
 
-    $expenses = $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT SUM(amount) FROM $table WHERE user_id = %d AND type = 'expense'",
-            $user_id
-        )
-    );
+        if ($plan_id <= 0) {
+            wp_send_json_error(['message' => 'Invalid plan ID.']);
+        }
 
-    return floatval($incomes) - floatval($expenses);
-}
+        $result = $this->wpdb->delete(
+            $this->plans_table,
+            ['id' => $plan_id, 'user_id' => $this->user_id],
+            ['%d', '%d']
+        );
 
-function bb_add_monthly_plan($plan_month, $plan_text, $amount)
-{
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-
-    $wpdb->insert($table, [
-        'user_id' => $user_id,
-        'plan_text' => sanitize_text_field($plan_text),
-        'amount' => floatval($amount),
-        'plan_month' => $plan_month,
-        'status' => 'pending',
-    ]);
-}
-
-function bb_get_monthly_plans($month)
-{
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-    $start_date = date('Y-m-01', strtotime($month));
-    $end_date = date('Y-m-t', strtotime($month));
-
-    return $wpdb->get_results(
-        $wpdb->prepare("SELECT * FROM $table WHERE user_id = %d AND plan_month BETWEEN %s AND %s", $user_id, $start_date, $end_date)
-    );
-}
-
-
-function bb_ajax_add_plan() {
-    // Check if user is logged in
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'You must be logged in to add a plan.']);
+        if ($result) {
+            wp_send_json_success(['message' => 'Plan deleted successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to delete plan or plan not found.']);
+        }
     }
 
-    // Verify nonce
-    check_ajax_referer('bb_report_nonce', 'security');
+    public function ajax_update_plan_status() {
+        check_ajax_referer('bb_report_nonce', 'security');
 
-    // Sanitize inputs
-    $plan_text  = sanitize_text_field($_POST['plan_text'] ?? '');
-    $amount     = floatval($_POST['amount'] ?? 0);
-    $plan_month = sanitize_text_field($_POST['plan_month'] ?? '');
+        $plan_id = intval($_POST['plan_id'] ?? 0);
+        $new_status = sanitize_text_field($_POST['status'] ?? '');
 
-    if (empty($plan_text) || empty($amount) || empty($plan_month)) {
-        wp_send_json_error(['message' => 'All fields are required.']);
+        if ($plan_id <= 0 || !in_array($new_status, ['pending', 'done'])) {
+            wp_send_json_error(['message' => 'Invalid plan ID or status.']);
+        }
+
+        $result = $this->wpdb->update(
+            $this->plans_table,
+            ['status' => $new_status],
+            ['id' => $plan_id, 'user_id' => $this->user_id],
+            ['%s'],
+            ['%d', '%d']
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(['message' => 'Plan status updated successfully.']);
+        } else {
+            wp_send_json_error(['message' => 'Failed to update plan status.']);
+        }
     }
 
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
+    public function ajax_get_monthly_report() {
+        check_ajax_referer('bb_report_nonce', 'nonce');
 
-    $inserted = $wpdb->insert($table, [
-        'user_id'    => $user_id,
-        'plan_text'  => $plan_text,
-        'amount'     => $amount,
-        'plan_month' => $plan_month,
-        'status'     => 'pending',
-    ], ['%d', '%s', '%f', '%s', '%s']);
+        // Sanitize and normalize month input
+        $month = isset($_POST['month']) ? sanitize_text_field($_POST['month']) : date('Y-m');
+        // Convert to YYYY-MM format if necessary
+        $month_start = date('Y-m-01', strtotime($month));
+        $month_end = date('Y-m-t', strtotime($month_start));
 
-    if ($inserted) {
-        wp_send_json_success(['message' => 'Plan added successfully.']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to add plan.']);
-    }
-}
+        // Debug: Log the query parameters
+        error_log("BudgetBuddy: Fetching report for user {$this->user_id}, month {$month_start} to {$month_end}");
 
+        $transactions = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT type, amount 
+                FROM {$this->transactions_table} 
+                WHERE user_id = %d 
+                AND date >= %s 
+                AND date <= %s",
+                $this->user_id,
+                $month_start,
+                $month_end
+            )
+        );
 
+        // Debug: Log the number of transactions found
+        error_log("BudgetBuddy: Found " . count($transactions) . " transactions");
 
-function bb_ajax_update_plan_status() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'You must be logged in to update plan status.']);
-    }
+        $income = 0;
+        $expense = 0;
+        $loan = 0;
+        $transaction_count = count($transactions);
 
-    check_ajax_referer('bb_report_nonce', 'security');
+        foreach ($transactions as $tx) {
+            if ($tx->type === 'income') {
+                $income += floatval($tx->amount);
+            } elseif ($tx->type === 'expense') {
+                $expense += floatval($tx->amount);
+            } elseif ($tx->type === 'loan') {
+                $loan += floatval($tx->amount);
+            }
+        }
 
-    $plan_id = intval($_POST['plan_id'] ?? 0);
-    $new_status = sanitize_text_field($_POST['status'] ?? '');
+        $net = $income - $expense - $loan;
 
-    if (!$plan_id || !$new_status) {
-        wp_send_json_error(['message' => 'Missing plan ID or status.']);
-    }
+        $data = [
+            'month_name' => date('F Y', strtotime($month_start)),
+            'income' => $income,
+            'expense' => $expense,
+            'loan' => $loan,
+            'net' => $net,
+            'transaction_count' => $transaction_count
+        ];
 
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-
-    $updated = $wpdb->update(
-        $table,
-        ['status' => $new_status],
-        ['id' => $plan_id, 'user_id' => $user_id],
-        ['%s'],
-        ['%d', '%d']
-    );
-
-    if ($updated !== false) {
-        wp_send_json_success(['message' => 'Plan status updated.']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to update plan status.']);
-    }
-}
-
-function bb_ajax_delete_transaction() {
-    // Check if user is logged in
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'You must be logged in to delete transactions.']);
-    }
-    
-    // Verify nonce
-    check_ajax_referer('bb_report_nonce', 'security');
-    
-    // Get transaction ID
-    $transaction_id = isset($_POST['transaction_id']) ? intval($_POST['transaction_id']) : 0;
-    
-    if (!$transaction_id) {
-        wp_send_json_error(['message' => 'Invalid transaction ID.']);
-    }
-    
-    // Delete the transaction
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_transactions';
-    $user_id = get_current_user_id();
-    
-    $result = $wpdb->delete(
-        $table,
-        [
-            'id' => $transaction_id,
-            'user_id' => $user_id // Security: ensure user can only delete their own transactions
-        ],
-        ['%d', '%d']
-    );
-    
-    if ($result !== false) {
-        wp_send_json_success(['message' => 'Transaction deleted successfully!']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to delete transaction. Please try again.']);
+        wp_send_json_success($data);
     }
 }
-
-function bb_ajax_delete_plan() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error(['message' => 'You must be logged in to delete plans.']);
-    }
-
-    check_ajax_referer('bb_report_nonce', 'security');
-
-    $plan_id = intval($_POST['plan_id'] ?? 0);
-    if (!$plan_id) {
-        wp_send_json_error(['message' => 'Invalid plan ID.']);
-    }
-
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-
-    $deleted = $wpdb->delete($table, ['id' => $plan_id, 'user_id' => $user_id], ['%d', '%d']);
-
-    if ($deleted !== false) {
-        wp_send_json_success(['message' => 'Plan deleted successfully.']);
-    } else {
-        wp_send_json_error(['message' => 'Failed to delete plan.']);
-    }
-}
-
-
-
-function bb_get_monthly_plan_total($month)
-{
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-
-    $start_date = date('Y-m-01', strtotime($month));
-    $end_date = date('Y-m-t', strtotime($month));
-
-    $total = $wpdb->get_var($wpdb->prepare("
-        SELECT SUM(amount)
-        FROM $table
-        WHERE user_id = %d AND plan_month BETWEEN %s AND %s
-    ", $user_id, $start_date, $end_date));
-
-    return floatval($total);
-}
-
-
-/**
- * Get monthly summary data (income, expenses, loans)
- * 
- * @param string $month The month in Y-m format
- * @return array Summary data
- */
-function bb_get_monthly_summary($month) {
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_transactions';
-    $user_id = get_current_user_id();
-    
-    $start_date = date('Y-m-01', strtotime($month));
-    $end_date = date('Y-m-t', strtotime($month));
-    
-    // Get income total
-    $income = $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(amount) FROM $table 
-        WHERE user_id = %d 
-        AND type = 'income' 
-        AND date BETWEEN %s AND %s",
-        $user_id, $start_date, $end_date
-    ));
-    
-    // Get expense total
-    $expense = $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(amount) FROM $table 
-        WHERE user_id = %d 
-        AND type = 'expense' 
-        AND date BETWEEN %s AND %s",
-        $user_id, $start_date, $end_date
-    ));
-    
-    // Get loan total
-    $loan = $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(amount) FROM $table 
-        WHERE user_id = %d 
-        AND type = 'loan' 
-        AND date BETWEEN %s AND %s",
-        $user_id, $start_date, $end_date
-    ));
-    
-    // Get total transactions count
-    $transaction_count = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM $table 
-        WHERE user_id = %d 
-        AND date BETWEEN %s AND %s",
-        $user_id, $start_date, $end_date
-    ));
-    
-    // Calculate net savings (income - expense - loan)
-    $net = floatval($income) - floatval($expense) - floatval($loan);
-    
-    return [
-        'income' => floatval($income) ?: 0,
-        'expense' => floatval($expense) ?: 0,
-        'loan' => floatval($loan) ?: 0,
-        'net' => $net,
-        'transaction_count' => intval($transaction_count),
-        'month_name' => date('F Y', strtotime($month))
-    ];
-}
-
-
-/**
- * AJAX handler for monthly report
- */
-function bb_ajax_get_monthly_report()
-{
-    // Verify nonce
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'bb_report_nonce')) {
-        wp_send_json_error('Security check failed');
-    }
-
-    if (!isset($_POST['month']) || empty($_POST['month'])) {
-        wp_send_json_error('Missing month parameter');
-    }
-
-    $month = sanitize_text_field($_POST['month']);
-    $summary = bb_get_monthly_summary($month);
-
-    wp_send_json_success($summary);
-}
-
-function bb_update_plan_status($id, $new_status)
-{
-    global $wpdb;
-    $table = $wpdb->prefix . 'bb_monthly_plans';
-    $user_id = get_current_user_id();
-
-    $wpdb->update($table, ['status' => $new_status], ['id' => $id, 'user_id' => $user_id]);
-}
+?>

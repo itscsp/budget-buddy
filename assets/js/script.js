@@ -1,458 +1,389 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const openBtn = document.getElementById("bb_add_action");
-  const modal = document.getElementById("bb_transation_modal_overlay");
-  const closeBtn = document.querySelector(".bb-transation_modal__close");
+jQuery(document).ready(function ($) {
+    // Modal handling for transactions
+    const $transactionModal = $("#bb_transation_modal_overlay");
+    const $transactionOpenBtn = $("#bb_add_action");
+    const $transactionCloseBtn = $(".bb-transation_modal__close");
 
-  if (openBtn && modal && closeBtn) {
-    // Open modal
-    openBtn.addEventListener("click", () => {
-      modal.classList.add("active");
+    if ($transactionOpenBtn.length && $transactionModal.length && $transactionCloseBtn.length) {
+        $transactionOpenBtn.on("click", () => {
+            $transactionModal.addClass("active");
+        });
+
+        $transactionCloseBtn.on("click", () => {
+            $transactionModal.removeClass("active");
+        });
+
+        $transactionModal.on("click", (e) => {
+            if (e.target === $transactionModal[0]) {
+                $transactionModal.removeClass("active");
+            }
+        });
+    }
+
+    // Fade out alerts
+    $(".bb-alert").each(function () {
+        setTimeout(() => {
+            $(this).fadeTo(500, 0, () => $(this).remove());
+        }, 3000);
     });
 
-    // Close modal via close button
-    closeBtn.addEventListener("click", () => {
-      modal.classList.remove("active");
-    });
+    // Modal handling for plans
+    const $planModal = $("#bb_plan_modal_overlay");
+    const $planMonthInput = $("#plan_month");
 
-    // Close modal by clicking outside
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.classList.remove("active");
-      }
-    });
-  }
-
-  const alerts = document.querySelectorAll(".bb-alert");
-  alerts.forEach((alert) => {
-    setTimeout(() => {
-      alert.style.opacity = "0";
-      setTimeout(() => alert.remove(), 500); // remove after fade
-    }, 3000); // hide after 3 seconds
-  });
-
-  const planModal = document.getElementById("bb_plan_modal_overlay");
-  const planMonthInput = document.getElementById("plan_month");
-
-  document.querySelectorAll(".bb-toggle-plan").forEach((button) => {
-    button.addEventListener("click", function () {
-      const selectedMonth = button.getAttribute("data-month");
-      if (planMonthInput) {
-        planMonthInput.value = selectedMonth;
-      }
-      planModal.style.display = "flex";
-    });
-  });
-
-  // Close modals
-  document.querySelectorAll(".bb-plan_modal__close").forEach((closeBtn) => {
-    closeBtn.addEventListener("click", function () {
-      planModal.style.display = "none";
-    });
-  });
-
-  // Optional: close modal on outside click
-  document.querySelectorAll(".bb-plan_modal__overlay").forEach((overlay) => {
-    overlay.addEventListener("click", function (e) {
-      if (e.target === this) {
-        this.style.display = "none";
-      }
-    });
-  });
-
-  // Toggle transaction detail view
-  document.querySelectorAll(".bb-expand-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const transactionEl = this.closest(".bb-transaction");
-      const detailsEl = transactionEl.querySelector(".bb-transaction__details");
-
-      if (detailsEl) {
-        const isVisible = detailsEl.style.display === "block";
-
-        detailsEl.style.display = isVisible ? "none" : "block";
-
-        // Toggle class
-        this.classList.remove(isVisible ? "Collapse" : "Expand");
-        this.classList.add(isVisible ? "Expand" : "Collapse");
-      }
-    });
-  });
-
-  // Dynamic styling for type select in form
-  const typeSelect = document.querySelector('select[name="type"]');
-  if (typeSelect) {
-    const updateSelectStyle = () => {
-      typeSelect.classList.remove(
-        "bb-form__input--income",
-        "bb-form__input--expense",
-        "bb-form__input--loan"
-      );
-      if (typeSelect.value === "income") {
-        typeSelect.classList.add("bb-form__input--income");
-      } else if (typeSelect.value === "expense") {
-        typeSelect.classList.add("bb-form__input--expense");
-      } else if (typeSelect.value === "loan") {
-        typeSelect.classList.add("bb-form__input--loan");
-      }
-    };
-
-    typeSelect.addEventListener("change", updateSelectStyle);
-    updateSelectStyle(); // Initial call to apply style
-  }
-
-  const planButtons = document.querySelectorAll(".bb-month__plan-btn");
-
-  planButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      // Get parent .bb-month
-      const thisMonth = btn.closest(".bb-month");
-      const thisPlan = thisMonth.querySelector(".bb-month__plan");
-
-      // Hide all other plans
-      document.querySelectorAll(".bb-month__plan").forEach((plan) => {
-        if (plan !== thisPlan) {
-          plan.style.display = "none";
+    $(".bb-toggle-plan").on("click", function () {
+        const selectedMonth = $(this).data("month");
+        if ($planMonthInput.length) {
+            $planMonthInput.val(selectedMonth);
         }
-      });
-
-      // Toggle current one
-      if (thisPlan) {
-        const isVisible = thisPlan.style.display === "block";
-        thisPlan.style.display = isVisible ? "none" : "block";
-      }
+        $planModal.css("display", "flex");
     });
-  });
-});
 
-// Monthly Report functionality
-document.addEventListener("DOMContentLoaded", () => {
-  // Handle Report Button Click
-  document.querySelectorAll(".bb-month__report-btn").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const month = this.getAttribute("data-month");
-      const reportModal = document.getElementById("bb_report_modal_overlay");
-      const reportContent = document.getElementById("bb-report-content");
+    $(".bb-plan_modal__close").on("click", () => {
+        $planModal.css("display", "none");
+    });
 
-      // Show modal with loading state
-      reportModal.classList.add("active");
-      reportContent.innerHTML =
-        '<div class="bb-report-loading">Loading report data...</div>';
+    $planModal.on("click", function (e) {
+        if (e.target === this) {
+            $(this).css("display", "none");
+        }
+    });
 
-      // Fetch report data via AJAX
-      const formData = new FormData();
-      formData.append("action", "bb_get_monthly_report");
-      formData.append("month", month);
-      formData.append("nonce", bb_data.report_nonce);
+    // Modal handling for reports
+    const $reportModal = $("#bb_report_modal_overlay");
+    const $reportCloseBtn = $(".bb-report_modal__close");
 
-      fetch(bb_data.ajax_url, {
-        method: "POST",
-        body: formData,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            generateReportHTML(data.data, reportContent);
-          } else {
-            reportContent.innerHTML = `<div class="bb-report-error">Error loading report: ${data.data}</div>`;
-          }
-        })
-        .catch((error) => {
-          reportContent.innerHTML = `<div class="bb-report-error">Error: ${error.message}</div>`;
+    if ($reportCloseBtn.length && $reportModal.length) {
+        $reportCloseBtn.on("click", () => {
+            $reportModal.removeClass("active");
+        });
+
+        $reportModal.on("click", (e) => {
+            if (e.target === $reportModal[0]) {
+                $reportModal.removeClass("active");
+            }
+        });
+    }
+
+    // Print report
+    $("#bb-print-report").on("click", () => {
+        window.print();
+    });
+
+    // Toggle transaction details
+    $(".bb-expand-btn").on("click", function () {
+        const $transactionEl = $(this).closest(".bb-transaction");
+        const $detailsEl = $transactionEl.find(".bb-transaction__details");
+        const isVisible = $detailsEl.is(":visible");
+
+        $detailsEl.toggle(!isVisible);
+        $(this).toggleClass("Expand", !isVisible).toggleClass("Collapse", isVisible);
+    });
+
+    // Dynamic styling for type select
+    const $typeSelect = $('select[name="type"]');
+    if ($typeSelect.length) {
+        const updateSelectStyle = () => {
+            $typeSelect.removeClass(
+                "bb-form__input--income bb-form__input--expense bb-form__input--loan"
+            );
+            $typeSelect.addClass(`bb-form__input--${$typeSelect.val()}`);
+        };
+
+        $typeSelect.on("change", updateSelectStyle);
+        updateSelectStyle();
+    }
+
+    // Toggle monthly plan visibility
+    $(".bb-month__plan-btn").on("click", function () {
+        const $month = $(this).closest(".bb-month");
+        const $plan = $month.find(".bb-month__plan");
+        const isVisible = $plan.is(":visible");
+
+        $(".bb-month__plan").not($plan).hide();
+        $plan.toggle(!isVisible);
+    });
+
+    // Radio button active state
+    const $radioButtons = $('.budget-class input[type="radio"]');
+    $radioButtons.on("change", function () {
+        $(".budget-class-type").removeClass("active");
+        $(this).closest(".budget-class-type").addClass("active");
+    });
+
+    const $checkedRadio = $('.budget-class input[type="radio"]:checked');
+    if ($checkedRadio.length) {
+        $checkedRadio.closest(".budget-class-type").addClass("active");
+    }
+
+    // Add transaction
+    $("#bb-add-transaction-form").on("submit", function (e) {
+        e.preventDefault();
+        const $form = $(this);
+        const $activeRadio = $('.budget-class input[type="radio"]:checked');
+
+        const formData = new FormData();
+        formData.append("action", "bb_add_transaction");
+        formData.append("bb_transaction_nonce", bb_data.transaction_nonce);
+        formData.append("type", $form.find('[name="type"]').val());
+        formData.append("amount", $form.find('[name="amount"]').val());
+        formData.append("description", $form.find('[name="description"]').val());
+        formData.append("date", $form.find('[name="date"]').val());
+        if ($activeRadio.length) {
+            formData.append("category_id", $activeRadio.val());
+        }
+
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: () => $form.find(".bb-form__submit").prop("disabled", true).val("Adding..."),
+            success: (response) => {
+                if (response.success) {
+                    showAlert(response.data.message, "success");
+                    $form[0].reset();
+                    location.reload();
+                } else {
+                    showAlert(response.data.message || "Error adding transaction", "error");
+                }
+            },
+            error: () => {
+                showAlert("Error adding transaction. Please try again.", "error");
+            },
+            complete: () => $form.find(".bb-form__submit").prop("disabled", false).val("Add Transaction")
         });
     });
-  });
 
-  // Close report modal
-  const reportModal = document.getElementById("bb_report_modal_overlay");
-  const reportCloseBtn = document.querySelector(".bb-report_modal__close");
-
-  if (reportCloseBtn && reportModal) {
-    reportCloseBtn.addEventListener("click", () => {
-      reportModal.classList.remove("active");
-    });
-
-    reportModal.addEventListener("click", (e) => {
-      if (e.target === reportModal) {
-        reportModal.classList.remove("active");
-      }
-    });
-  }
-
-  // Print report functionality
-  const printBtn = document.getElementById("bb-print-report");
-  if (printBtn) {
-    printBtn.addEventListener("click", () => {
-      window.print();
-    });
-  }
-});
-
-// Generate Report HTML
-function generateReportHTML(data, container) {
-  const incomeFormatted = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(data.income);
-
-  const expenseFormatted = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(data.expense);
-
-  const loanFormatted = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(data.loan);
-
-  const netFormatted = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(data.net);
-
-  const netClass = data.net >= 0 ? "positive" : "negative";
-
-  const html = `
-    <div class="bb-report-header">
-      <div class="bb-report-title">Financial Report: ${data.month_name}</div>
-      <div class="bb-report-subtitle">Summary of your financial activity</div>
-    </div>
-    
-    <div class="bb-report-summary">
-      <div class="bb-report-card income">
-        <div class="bb-report-label">Income</div>
-        <div class="bb-report-value positive">${incomeFormatted}</div>
-      </div>
-      
-      <div class="bb-report-card expense">
-        <div class="bb-report-label">Expenses</div>
-        <div class="bb-report-value negative">${expenseFormatted}</div>
-      </div>
-      
-      <div class="bb-report-card loan">
-        <div class="bb-report-label">Loans</div>
-        <div class="bb-report-value">${loanFormatted}</div>
-      </div>
-      
-      <div class="bb-report-card net">
-        <div class="bb-report-label">Net</div>
-        <div class="bb-report-value ${netClass}">${netFormatted}</div>
-      </div>
-    </div>
-    
-    <div class="bb-report-details">
-      <h4>Transaction Summary</h4>
-      <p>Total transactions: ${data.transaction_count}</p>
-      <p>Monthly budget utilization: ${
-        data.expense > 0 && data.income > 0
-          ? Math.round((data.expense / data.income) * 100) + "%"
-          : "N/A"
-      }</p>
-    </div>
-  `;
-
-  container.innerHTML = html;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  jQuery(function ($) {
-    // Delete transation
+    // Delete transaction
     $(".delete-transaction-btn").on("click", function (e) {
-      e.preventDefault();
+        e.preventDefault();
+        const $button = $(this);
+        const transactionId = $button.data("id");
 
-      const button = this; // More readable than e.target
-      const transactionId = button.getAttribute("data-id");
+        if (!confirm("Are you sure you want to delete this transaction?")) {
+            return;
+        }
 
-      if (confirm("Are you sure you want to delete this transaction?")) {
-        // Prepare the data
         const formData = new FormData();
         formData.append("action", "bb_delete_transaction");
         formData.append("transaction_id", transactionId);
         formData.append("security", bb_data.report_nonce);
 
-        // Show loading state
-        button.textContent = "Deleting...";
-        button.disabled = true;
-
-        // Send AJAX request
-        fetch(bb_data.ajax_url, {
-          method: "POST",
-          body: formData,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              // Find and remove the transaction element from the DOM
-              const transactionElement = button.closest(".bb-transaction");
-              transactionElement.style.opacity = "0";
-              setTimeout(() => {
-                transactionElement.remove();
-                // Display success message
-                const alertDiv = document.createElement("div");
-                alertDiv.className = "updated bb-alert";
-                alertDiv.innerHTML = `<p>${data.data.message}</p>`;
-                document.querySelector(".bb-container").prepend(alertDiv);
-
-                // Auto-remove the alert after 3 seconds
-                setTimeout(() => {
-                  alertDiv.style.opacity = "0";
-                  setTimeout(() => alertDiv.remove(), 500);
-                }, 3000);
-              }, 300);
-            } else {
-              alert(data.data.message || "Error deleting transaction");
-              button.textContent = "Delete";
-              button.disabled = false;
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: () => {
+                $button.text("Deleting...").prop("disabled", true);
+            },
+            success: (response) => {
+                if (response.success) {
+                    const $transactionEl = $button.closest(".bb-transaction");
+                    $transactionEl.fadeTo(300, 0, () => {
+                        $transactionEl.remove();
+                        showAlert(response.data.message, "success");
+                    });
+                } else {
+                    showAlert(response.data.message || "Error deleting transaction", "error");
+                }
+            },
+            error: () => {
+                showAlert("Error deleting transaction. Please try again.", "error");
+            },
+            complete: () => {
+                $button.text("Delete").prop("disabled", false);
             }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            alert("Error deleting transaction. Please try again.");
-            button.textContent = "Delete";
-            button.disabled = false;
-          });
-      }
+        });
     });
 
+    // Add plan
     $("#bb-add-plan-form").on("submit", function (e) {
-      e.preventDefault();
+        e.preventDefault();
+        const $form = $(this);
 
-      const data = {
-        action: "bb_add_plan",
-        security: bb_data.report_nonce,
-        plan_text: $("#plan_text").val(),
-        amount: $("#plan_amount").val(),
-        plan_month: $("#plan_month").val(),
-      };
+        const formData = new FormData();
+        formData.append("action", "bb_add_plan");
+        formData.append("security", bb_data.report_nonce);
+        formData.append("plan_text", $("#plan_text").val());
+        formData.append("amount", $("#plan_amount").val());
+        formData.append("plan_month", $("#plan_month").val());
 
-      console.log("Data:", data);
-      $.post(bb_data.ajax_url, data, function (response) {
-        if (response.success) {
-          alert(response.data.message);
-          location.reload(); // or update UI dynamically
-        } else {
-          alert(response.data.message);
-        }
-      });
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: () => $form.find(".bb-form__submit").prop("disabled", true).val("Saving..."),
+            success: (response) => {
+                if (response.success) {
+                    showAlert(response.data.message, "success");
+                    $form[0].reset();
+                    $planModal.css("display", "none");
+                    location.reload();
+                } else {
+                    showAlert(response.data.message || "Error adding plan", "error");
+                }
+            },
+            error: () => {
+                showAlert("Error adding plan. Please try again.", "error");
+            },
+            complete: () => $form.find(".bb-form__submit").prop("disabled", false).val("Save Plan")
+        });
     });
 
+    // Delete plan
     $(".bb-plan-delete-form").on("submit", function (e) {
-      e.preventDefault();
+        e.preventDefault();
+        const $form = $(this);
 
-      if (!confirm("Are you sure you want to delete this plan?")) {
-        return;
-      }
-
-      var $form = $(this);
-      var formData = new FormData(this);
-      formData.append("action", "bb_delete_plan");
-      formData.append("security", bb_data.report_nonce); // localized nonce
-
-      $.ajax({
-        url: bb_data.ajax_url,
-        method: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-          if (response.success) {
-            alert("Plan deleted successfully.");
-
-            // Remove the plan container
-            var $planContainer = $form.closest(".bb-plan-item");
-            if ($planContainer.length) {
-              $planContainer.remove();
-            }
-          } else {
-            alert(response.data.message || "Failed to delete plan.");
-          }
-        },
-        error: function (xhr, status, error) {
-          console.error("AJAX Error:", error);
-          alert("An error occurred. Please try again.");
-        },
-      });
-    });
-
-    $(".bb-plan-status-form").on("submit", function (e) {
-      e.preventDefault();
-
-      const $form = $(this);
-      const formData = new FormData(this);
-
-      formData.append("action", "bb_update_plan_status");
-      formData.append("security", bb_data.report_nonce); // Make sure this nonce is localized
-
-      $.ajax({
-        url: bb_data.ajax_url,
-        method: "POST",
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function (response) {
-          if (response.success) {
-            alert("Plan status updated.");
-            // Optional: Reload the page or update the DOM accordingly
-            location.reload();
-          } else {
-            alert(response.data.message || "Failed to update status.");
-          }
-        },
-        error: function (xhr, status, error) {
-          console.error("Error:", error);
-          alert("An error occurred while updating status.");
-        },
-      });
-    });
-  });
-});
-
-jQuery(document).ready(function ($) {
-  // Select all radio buttons in .budget-class
-  const $radioButtons = $('.budget-class input[type="radio"]');
-
-  // Add change event listener
-  $radioButtons.on("change", function () {
-    // Remove active class from all .budget-class-type divs
-    $(".budget-class-type").removeClass("active");
-    // Add active class to the parent .budget-class-type div
-    $(this).closest(".budget-class-type").addClass("active");
-  });
-
-  // Set initial active state for the checked radio button
-  const $checkedRadio = $('.budget-class input[type="radio"]:checked');
-  if ($checkedRadio.length) {
-    $checkedRadio.closest(".budget-class-type").addClass("active");
-  }
-
-  $(document).ready(function () {
-    $("#bb-add-transaction-form").on("submit", function (e) {
-      e.preventDefault();
-
-      const $activeRadio = $('.budget-class input[type="radio"]:checked');
-
-      const form = $(this);
-      const formData = {
-        action: "bb_add_transaction",
-        bb_transaction_nonce: bb_data.transaction_nonce, // Use transaction_nonce
-        type: form.find('[name="type"]').val(),
-        amount: form.find('[name="amount"]').val(),
-        description: form.find('[name="description"]').val(),
-        date: form.find('[name="date"]').val(),
-        category_id: $activeRadio.val(), // Changed from category to category_id
-      };
-
-      $.post(bb_data.ajax_url, formData, function (response) {
-        if (response.success) {
-          alert(response.data.message);
-          form[0].reset(); // Reset the form
-          window.location.reload(); // Reload page to show new transaction
-        } else {
-          alert(response.data.message || "Error adding transaction");
+        if (!confirm("Are you sure you want to delete this plan?")) {
+            return;
         }
-      });
+
+        const formData = new FormData(this);
+        formData.append("action", "bb_delete_plan");
+        formData.append("security", bb_data.report_nonce);
+
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: (response) => {
+                if (response.success) {
+                    const $planContainer = $form.closest(".bb-plan-item");
+                    $planContainer.fadeOut(300, () => {
+                        $planContainer.remove();
+                        showAlert("Plan deleted successfully.", "success");
+                    });
+                } else {
+                    showAlert(response.data.message || "Failed to delete plan.", "error");
+                }
+            },
+            error: () => {
+                showAlert("An error occurred. Please try again.", "error");
+            }
+        });
     });
-  });
+
+    // Update plan status
+    $(".bb-plan-status-form").on("submit", function (e) {
+        e.preventDefault();
+        const $form = $(this);
+
+        const formData = new FormData(this);
+        formData.append("action", "bb_update_plan_status");
+        formData.append("security", bb_data.report_nonce);
+
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: (response) => {
+                if (response.success) {
+                    showAlert("Plan status updated.", "success");
+                    location.reload();
+                } else {
+                    showAlert(response.data.message || "Failed to update status.", "error");
+                }
+            },
+            error: () => {
+                showAlert("An error occurred while updating status.", "error");
+            }
+        });
+    });
+
+    // Generate monthly report
+    $(".bb-month__report-btn").on("click", function () {
+        const month = $(this).data("month");
+        const $reportContent = $("#bb-report-content");
+
+        $reportModal.addClass("active");
+        $reportContent.html('<div class="bb-report-loading">Loading report data...</div>');
+
+        const formData = new FormData();
+        formData.append("action", "bb_get_monthly_report");
+        formData.append("month", month);
+        formData.append("nonce", bb_data.report_nonce);
+
+        $.ajax({
+            url: bb_data.ajax_url,
+            method: "POST",
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: (response) => {
+                if (response.success) {
+                    generateReportHTML(response.data, $reportContent);
+                } else {
+                    $reportContent.html(`<div class="bb-report-error">Error loading report: ${response.data}</div>`);
+                }
+            },
+            error: (error) => {
+                $reportContent.html(`<div class="bb-report-error">Error: ${error.statusText}</div>`);
+            }
+        });
+    });
+
+    // Helper function to generate report HTML
+    function generateReportHTML(data, $container) {
+        const formatter = new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        });
+
+        const html = `
+            <div class="bb-report-header">
+                <div class="bb-report-title">Financial Report: ${data.month_name}</div>
+                <div class="bb-report-subtitle">Summary of your financial activity</div>
+            </div>
+            <div class="bb-report-summary">
+                <div class="bb-report-card income">
+                    <div class="bb-report-label">Income</div>
+                    <div class="bb-report-value positive">${formatter.format(data.income)}</div>
+                </div>
+                <div class="bb-report-card expense">
+                    <div class="bb-report-label">Expenses</div>
+                    <div class="bb-report-value negative">${formatter.format(data.expense)}</div>
+                </div>
+                <div class="bb-report-card loan">
+                    <div class="bb-report-label">Loans</div>
+                    <div class="bb-report-value">${formatter.format(data.loan)}</div>
+                </div>
+                <div class="bb-report-card net">
+                    <div class="bb-report-label">Net</div>
+                    <div class="bb-report-value ${data.net >= 0 ? "positive" : "negative"}">${formatter.format(data.net)}</div>
+                </div>
+            </div>
+            <div class="bb-report-details">
+                <h4>Transaction Summary</h4>
+                <p>Total transactions: ${data.transaction_count}</p>
+                <p>Monthly budget utilization: ${
+                    data.expense > 0 && data.income > 0
+                        ? Math.round((data.expense / data.income) * 100) + "%"
+                        : "N/A"
+                }</p>
+            </div>
+        `;
+
+        $container.html(html);
+    }
+
+    // Helper function to show alerts
+    function showAlert(message, type) {
+        const $alert = $(`<div class="bb-alert ${type === "success" ? "updated" : "error"}"><p>${message}</p></div>`);
+        $(".bb-container").prepend($alert);
+        setTimeout(() => {
+            $alert.fadeTo(500, 0, () => $alert.remove());
+        }, 3000);
+    }
 });
