@@ -653,3 +653,62 @@ fieldset.budget-class > legend {
     cursor: pointer;
     margin-left: 5px;
 }
+
+button.status-pending {
+    border: none;
+    border-color: transparent;
+    border-radius: 0;
+    text-decoration-color: transparent;
+    background: transparent;
+}
+
+form.bb-plan-status-form {
+    background: transparent;
+}
+
+li.bb-plan-item hr {
+    height: 30px;
+    width: 1px;
+    margin: 0 10px;
+}
+.bb-plan-item span.status-text {
+    width: 100px;
+    text-align: center;
+}
+
+.bb-plan-item span.text-red * {
+    color: red !important;
+}
+
+.bb-plan-item span.text-green {color: green;}
+
+.bb-plan-item .bb-plan-action {
+    display: flex;
+    gap: 10px;
+}
+
+@media(max-width:768px) {
+
+    li.bb-plan-item hr{
+        display:none;
+    }
+    
+    .bb-plan-item{
+        flex-direction:column;
+        align-items:start;
+        border-bottom: 1px solid #1e73be;
+        position:relative;
+    }
+    
+    .bb-plan-action{
+        margin-top:25px;
+        width: 100%;
+        justify-content: space-around;
+    }
+
+    .bb-plan-item span.status-text{
+        position:absolute;
+        right:0;
+        z-index:1;
+    }
+}

@@ -115,6 +115,52 @@ function bb_get_monthly_plan_total($month)
     return floatval($total);
 }
 
+/**
+ * Get total amount of 'paid' (status: done) plans for a given month
+ *
+ * @param string $month Format: Y-m
+ * @return float
+ */
+function bb_get_paid_plan_amount($month) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    $start_date = date('Y-m-01', strtotime($month));
+    $end_date = date('Y-m-t', strtotime($month));
+
+    $total = $wpdb->get_var($wpdb->prepare("
+        SELECT SUM(amount)
+        FROM $table
+        WHERE user_id = %d AND status = 'done' AND plan_month BETWEEN %s AND %s
+    ", $user_id, $start_date, $end_date));
+
+    return floatval($total);
+}
+
+/**
+ * Get total amount of 'pending' plans for a given month
+ *
+ * @param string $month Format: Y-m
+ * @return float
+ */
+function bb_get_pending_plan_amount($month) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    $start_date = date('Y-m-01', strtotime($month));
+    $end_date = date('Y-m-t', strtotime($month));
+
+    $total = $wpdb->get_var($wpdb->prepare("
+        SELECT SUM(amount)
+        FROM $table
+        WHERE user_id = %d AND status = 'pending' AND plan_month BETWEEN %s AND %s
+    ", $user_id, $start_date, $end_date));
+
+    return floatval($total);
+}
+
 
 /**
  * Get monthly summary data (income, expenses, loans)

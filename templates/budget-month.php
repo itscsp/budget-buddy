@@ -34,11 +34,29 @@ $first_day_of_month = $args['first_day_of_month'];
         <?php endforeach; ?>
 
         <div class="bb-month__plan-summary">
-            <strong>Plan Budget:</strong>
-            ₹<?php
-                $monthly_plan_total = bb_get_monthly_plan_total(date('Y-m', strtotime($month)));
-                echo number_format($monthly_plan_total ?: 0, 2);
-            ?>
+            <li>
+                Paid:
+                ₹<?php
+                    $monthly_paid_plan_total = bb_get_paid_plan_amount(date('Y-m', strtotime($month)));
+                    echo number_format($monthly_paid_plan_total ?: 0, 2);
+                ?>
+            </li>
+            <li>
+                Panding:
+                ₹<?php
+                    $pending_plan_amount = bb_get_pending_plan_amount(date('Y-m', strtotime($month)));
+                    echo number_format($pending_plan_amount ?: 0, 2);
+                ?>
+            </li>
+
+            <li>
+                Budget:
+                ₹<?php
+                    $monthly_plan_total = bb_get_monthly_plan_total(date('Y-m', strtotime($month)));
+                    echo number_format($monthly_plan_total ?: 0, 2);
+                ?>
+            </li>
+            
         </div>
         <hr>
     </div>
