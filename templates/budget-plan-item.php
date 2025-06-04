@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) {
 }
 
 $plan = $plan_args['plan']; // for plan item
-$tx = $tx_args['tx'];       // for transaction item
 ?>
 
 <li class="bb-plan-item">
