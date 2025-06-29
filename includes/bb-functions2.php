@@ -171,6 +171,7 @@ function bb_get_pending_plan_amount($month) {
 function bb_get_monthly_summary($month) {
     global $wpdb;
     $table = $wpdb->prefix . 'bb_transactions';
+    $categories_table = $wpdb->prefix . 'bb_budget_categories';
     $user_id = get_current_user_id();
     
     $start_date = date('Y-m-01', strtotime($month));
@@ -213,14 +214,34 @@ function bb_get_monthly_summary($month) {
     
     // Calculate net savings (income - expense - loan)
     $net = floatval($income) - floatval($expense) - floatval($loan);
-    
+
+    // Calculate amount spent on each category percentage
+    $category_percents = [50, 25, 15, 10];
+    $category_spent = [];
+    foreach ($category_percents as $percent) {
+        $amount = $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(t.amount) FROM $table t
+            LEFT JOIN $categories_table c ON t.category_id = c.id
+            WHERE t.user_id = %d
+            AND t.type = 'expense'
+            AND t.date BETWEEN %s AND %s
+            AND c.percentage = %d",
+            $user_id, $start_date, $end_date, $percent
+        ));
+        $category_spent[$percent] = floatval($amount) ?: 0;
+    }
+
     return [
         'income' => floatval($income) ?: 0,
         'expense' => floatval($expense) ?: 0,
         'loan' => floatval($loan) ?: 0,
         'net' => $net,
         'transaction_count' => intval($transaction_count),
-        'month_name' => date('F Y', strtotime($month))
+        'month_name' => date('F Y', strtotime($month)),
+        'spent_50_percent' => $category_spent[50],
+        'spent_25_percent' => $category_spent[25],
+        'spent_15_percent' => $category_spent[15],
+        'spent_10_percent' => $category_spent[10],
     ];
 }
 
