@@ -59,10 +59,10 @@ function generateReportHTML(data, container) {
             </div>
         </div>
         <div class="bb-report-simple-text" style="margin-top: 10px;">
-            <p><strong style="color:#1e73be">Spent (50%):</strong> <span style="color:#1e73be">${spent50}</span></p>
-            <p><strong style="color:#27ae60">Spent (25%):</strong> <span style="color:#27ae60">${spent25}</span></p>
-            <p><strong style="color:#e67e22">Spent (15%):</strong> <span style="color:#e67e22">${spent15}</span></p>
-            <p><strong style="color:#c0392b">Spent (10%):</strong> <span style="color:#c0392b">${spent10}</span></p>
+            <p><strong style="color:#1e73be">Essentials:</strong> <span style="color:#1e73be">${spent50}</span></p>
+            <p><strong style="color:#27ae60">Grow:</strong> <span style="color:#27ae60">${spent25}</span></p>
+            <p><strong style="color:#e67e22">Stability:</strong> <span style="color:#e67e22">${spent15}</span></p>
+            <p><strong style="color:#c0392b">Rewards:</strong> <span style="color:#c0392b">${spent10}</span></p>
         </div>
         <div class="bb-report-details">
             <h4>Transaction Summary</h4>
