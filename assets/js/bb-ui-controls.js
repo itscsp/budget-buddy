@@ -1,4 +1,22 @@
 jQuery(document).ready(function($) {
+    // Initialize flatpickr
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr("#bb_date", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disableMobile: false,
+            allowInput: true,
+            // appendTo: document.getElementById('add-task-modal'),
+            onChange: function(selectedDates, dateStr, instance) {
+                console.log('Date selected:', dateStr);
+            }
+        });
+    } else {
+        console.error('Flatpickr is not loaded');
+    }
+});
+
+jQuery(document).ready(function($) {
     // Transaction Modal Controls
     const openBtn = $("#bb_add_action");
     const modal = $("#bb_transation_modal_overlay");

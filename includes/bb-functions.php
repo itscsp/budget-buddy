@@ -154,11 +154,80 @@ function bb_get_monthly_plans($month)
     $start_date = date('Y-m-01', strtotime($month));
     $end_date = date('Y-m-t', strtotime($month));
 
+    // Check for recurring plans from previous months that should be copied
+    $previous_recurring_plans = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT * FROM $table 
+            WHERE user_id = %d 
+            AND is_recurring = 1 
+            AND plan_month < %s 
+            AND NOT EXISTS (
+                SELECT 1 FROM $table t2 
+                WHERE t2.user_id = $table.user_id 
+                AND t2.plan_text = $table.plan_text 
+                AND t2.amount = $table.amount 
+                AND t2.plan_month = %s
+            )",
+            $user_id,
+            $start_date,
+            $start_date
+        )
+    );
+
+    // Create new instances of recurring plans
+    foreach ($previous_recurring_plans as $plan) {
+        $wpdb->insert(
+            $table,
+            [
+                'user_id'      => $user_id,
+                'plan_text'    => $plan->plan_text,
+                'amount'       => $plan->amount,
+                'plan_month'   => $start_date,
+                'status'       => 'pending',
+                'is_recurring' => 1
+            ],
+            ['%d', '%s', '%f', '%s', '%s', '%d']
+        );
+    }
+
+    // Get all plans for the current month
     return $wpdb->get_results(
         $wpdb->prepare("SELECT * FROM $table WHERE user_id = %d AND plan_month BETWEEN %s AND %s", $user_id, $start_date, $end_date)
     );
 }
 
+
+// Debug function to check recurring plans
+function bb_debug_check_recurring_plans() {
+    if (!current_user_can('administrator')) {
+        return 'Only administrators can access this function.';
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'bb_monthly_plans';
+    $user_id = get_current_user_id();
+
+    // Get all recurring plans
+    $recurring_plans = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT * FROM $table WHERE user_id = %d AND is_recurring = 1 ORDER BY plan_month DESC",
+            $user_id
+        )
+    );
+
+    $output = "=== Recurring Plans ===\n";
+    foreach ($recurring_plans as $plan) {
+        $output .= sprintf(
+            "Plan: %s\nAmount: %s\nMonth: %s\nStatus: %s\n\n",
+            $plan->plan_text,
+            $plan->amount,
+            $plan->plan_month,
+            $plan->status
+        );
+    }
+
+    return $output;
+}
 
 function bb_ajax_add_plan() {
     // Check if user is logged in
@@ -170,9 +239,11 @@ function bb_ajax_add_plan() {
     check_ajax_referer('bb_report_nonce', 'security');
 
     // Sanitize inputs
-    $plan_text  = sanitize_text_field($_POST['plan_text'] ?? '');
-    $amount     = floatval($_POST['amount'] ?? 0);
-    $plan_month = sanitize_text_field($_POST['plan_month'] ?? '');
+    $plan_text    = sanitize_text_field($_POST['plan_text'] ?? '');
+    $amount       = floatval($_POST['amount'] ?? 0);
+    $plan_month   = sanitize_text_field($_POST['plan_month'] ?? '');
+    $is_recurring = isset($_POST['is_recurring']) ? 1 : 0;
+    $plan_id      = isset($_POST['plan_id']) ? intval($_POST['plan_id']) : 0;
 
     if (empty($plan_text) || empty($amount) || empty($plan_month)) {
         wp_send_json_error(['message' => 'All fields are required.']);
@@ -182,13 +253,52 @@ function bb_ajax_add_plan() {
     $table = $wpdb->prefix . 'bb_monthly_plans';
     $user_id = get_current_user_id();
 
+    // If this is an update to an existing plan
+    if ($plan_id > 0) {
+        // Update the existing plan's recurring status
+        $updated = $wpdb->update(
+            $table,
+            [
+                'is_recurring' => $is_recurring,
+                'plan_text'   => $plan_text,
+                'amount'      => $amount
+            ],
+            ['id' => $plan_id, 'user_id' => $user_id],
+            ['%d', '%s', '%f'],
+            ['%d', '%d']
+        );
+
+        if ($updated) {
+            // If recurring is turned off, prevent future copies
+            if (!$is_recurring) {
+                // Update any future instances of this plan to not be recurring
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $table 
+                    SET is_recurring = 0 
+                    WHERE user_id = %d 
+                    AND plan_text = %s 
+                    AND amount = %f 
+                    AND plan_month > %s",
+                    $user_id,
+                    $plan_text,
+                    $amount,
+                    $plan_month
+                ));
+            }
+            wp_send_json_success(['message' => 'Plan updated successfully.']);
+            return;
+        }
+    }
+
+    // Insert new plan
     $inserted = $wpdb->insert($table, [
-        'user_id'    => $user_id,
-        'plan_text'  => $plan_text,
-        'amount'     => $amount,
-        'plan_month' => $plan_month,
-        'status'     => 'pending',
-    ], ['%d', '%s', '%f', '%s', '%s']);
+        'user_id'      => $user_id,
+        'plan_text'    => $plan_text,
+        'amount'       => $amount,
+        'plan_month'   => $plan_month,
+        'status'       => 'pending',
+        'is_recurring' => $is_recurring
+    ], ['%d', '%s', '%f', '%s', '%s', '%d']);
 
     if ($inserted) {
         wp_send_json_success(['message' => 'Plan added successfully.']);

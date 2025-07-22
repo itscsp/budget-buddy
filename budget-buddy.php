@@ -2,12 +2,15 @@
 /**
  * Plugin Name: BudgetBuddy
  * Description: A plugin to manage user income and expense
- * Version: 1.0.8
+ * Version: 1.0.9
  * Author: Chethan S Poojary
  * Author URL: https://chethanspoojary.com/
  */
 
 defined('ABSPATH') || exit;
+
+define('BUDGET_VERSION', '1.0.9');
+
 
 require_once plugin_dir_path(__FILE__) . 'includes/bb-admin-pages.php';
 require_once plugin_dir_path(__FILE__) . 'includes/bb-functions.php';
@@ -44,11 +47,17 @@ if (!class_exists('BudgetBuddy')) {
 
             wp_enqueue_style('bb-style', $plugin_url . 'assets/css/style.css');
             wp_enqueue_script('jquery');
-            wp_enqueue_script('budget-buddy-ui-controls', $plugin_url . 'assets/js/bb-ui-controls.js', ['jquery'], '1.0.0', true);
-            wp_enqueue_script('bb-monthly-report', $plugin_url . 'assets/js/bb-monthly-report.js', ['jquery', 'bb-report-utils'], '1.0.0', true);
-            wp_enqueue_script('bb-transaction-operations', $plugin_url . 'assets/js/bb-transaction-operations.js', ['jquery'], '1.0.0', true);
-            wp_enqueue_script('bb-plan-operations', $plugin_url . 'assets/js/bb-plan-operations.js', ['jquery'], '1.0.0', true);
-            wp_enqueue_script('bb-report-utils', $plugin_url . 'assets/js/bb-report-utils.js', ['jquery'], '1.0.0', true);
+            wp_enqueue_script('budget-buddy-ui-controls', $plugin_url . 'assets/js/bb-ui-controls.js', ['jquery'], BUDGET_VERSION, true);
+            wp_enqueue_script('budget-buddy-ui-controls', $plugin_url . 'assets/js/bb-ui-controls.js', ['jquery'], BUDGET_VERSION, true);
+            wp_enqueue_script('budget-buddy-ui-controls', $plugin_url . 'assets/js/bb-ui-controls.js', ['jquery'], BUDGET_VERSION, true);
+
+            wp_enqueue_style('tasks-flatpickr-css', $plugin_url . 'assets/js/library/flatpickr/flatpickr.min.css', array(), BUDGET_VERSION);
+            wp_enqueue_script('tasks-flatpickr-js', $plugin_url . 'assets/js/library/flatpickr/flatpickr.js', array('jquery'), BUDGET_VERSION, true);
+
+            wp_enqueue_script('bb-monthly-report', $plugin_url . 'assets/js/bb-monthly-report.js', ['jquery', 'bb-report-utils'], BUDGET_VERSION, true);
+            wp_enqueue_script('bb-transaction-operations', $plugin_url . 'assets/js/bb-transaction-operations.js', ['jquery'], BUDGET_VERSION, true);
+            wp_enqueue_script('bb-plan-operations', $plugin_url . 'assets/js/bb-plan-operations.js', ['jquery'], BUDGET_VERSION, true);
+            wp_enqueue_script('bb-report-utils', $plugin_url . 'assets/js/bb-report-utils.js', ['jquery'], BUDGET_VERSION, true);
 
             // Localize scripts
             $localize = [
@@ -110,6 +119,7 @@ if (!class_exists('BudgetBuddy')) {
                 amount float NOT NULL,
                 plan_month date NOT NULL,
                 status varchar(10) DEFAULT 'pending',
+                is_recurring tinyint(1) DEFAULT 0,
                 created_at datetime DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id)
             ) $charset_collate;";

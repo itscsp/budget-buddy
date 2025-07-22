@@ -18,6 +18,9 @@ if (!defined('ABSPATH')) {
         <h4 class="bb-modal__heading">Add Monthly Plan</h4>
         <form class="bb-form" id="bb-add-plan-form">
             <input type="hidden" name="plan_month" id="plan_month" value="" />
+            <input type="hidden" name="plan_id" id="plan_id" value="" />
+
+            <div id="bb-plan-month-display" style="margin-bottom: 12px; font-weight: bold; font-size: 1.1em;"></div>
 
             <label for="plan_amount">Planned Amount:</label>
             <input id="plan_amount" type="number" step="0.01" name="amount" required class="bb-form__input" />
@@ -25,7 +28,32 @@ if (!defined('ABSPATH')) {
             <label for="plan_text">Plan Text:</label>
             <input id="plan_text" type="text" name="plan_text" required class="bb-form__input" />
 
+            <div class="bb-form__checkbox-group">
+                <input type="checkbox" id="is_recurring" name="is_recurring" class="bb-form__checkbox" />
+                <label for="is_recurring">Repeat this plan every month</label>
+            </div>
+
             <input type="submit" value="Save Plan" class="button button-primary bb-form__submit" />
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var planMonthInput = document.getElementById('plan_month');
+    var planMonthDisplay = document.getElementById('bb-plan-month-display');
+    if (planMonthInput && planMonthDisplay) {
+        // Try to format the month as "Month YYYY" if possible
+        var val = planMonthInput.value;
+        if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            var d = new Date(val);
+            var monthName = d.toLocaleString('default', { month: 'long' });
+            planMonthDisplay.textContent = 'Plan Month: ' + monthName + ' ' + d.getFullYear();
+        } else if (val) {
+            planMonthDisplay.textContent = 'Plan Month: ' + val;
+        } else {
+            planMonthDisplay.textContent = '';
+        }
+    }
+});
+</script>

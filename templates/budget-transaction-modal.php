@@ -59,7 +59,7 @@ $categories = isset($args['categories']) ? $args['categories'] : array();
             <input id="bb-description" type="text" name="description" class="bb-form__input" />
 
             <label for="bb-date">Date:</label>
-            <input id="bb-date" type="date" name="date" required value="<?php echo date('Y-m-d'); ?>" class="bb-form__input" />
+            <input type="text" id="bb_date" name="date" class="bb-form__input" placeholder="Select date" required>
 
             <input type="submit" value="Add Transaction" class="button button-primary bb-form__submit" />
         </form>
