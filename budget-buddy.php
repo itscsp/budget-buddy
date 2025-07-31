@@ -15,6 +15,8 @@ define('BUDGET_VERSION', '1.0.9');
 require_once plugin_dir_path(__FILE__) . 'includes/bb-admin-pages.php';
 require_once plugin_dir_path(__FILE__) . 'includes/bb-functions.php';
 require_once plugin_dir_path(__FILE__) . 'includes/bb-functions2.php';
+require_once plugin_dir_path(__FILE__) . 'includes/bb-rest-api.php';
+require_once plugin_dir_path(__FILE__) . 'includes/bb-api-test.php';
 require_once plugin_dir_path(__FILE__) . 'plugin-update-checker/plugin-update-checker.php';
 
 use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
