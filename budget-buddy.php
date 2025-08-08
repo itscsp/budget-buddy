@@ -2,14 +2,14 @@
 /**
  * Plugin Name: BudgetBuddy
  * Description: A plugin to manage user income and expense
- * Version: 1.0.9
+ * Version: 1.0.10
  * Author: Chethan S Poojary
  * Author URL: https://chethanspoojary.com/
  */
 
 defined('ABSPATH') || exit;
 
-define('BUDGET_VERSION', '1.0.9');
+define('BUDGET_VERSION', '1.0.10');
 
 
 require_once plugin_dir_path(__FILE__) . 'includes/bb-admin-pages.php';
