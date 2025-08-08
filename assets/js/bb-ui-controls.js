@@ -3,7 +3,6 @@ jQuery(document).ready(function($) {
     if (typeof flatpickr !== 'undefined') {
         flatpickr("#bb_date", {
             dateFormat: "Y-m-d",
-            minDate: "today",
             disableMobile: false,
             allowInput: true,
             // appendTo: document.getElementById('add-task-modal'),
