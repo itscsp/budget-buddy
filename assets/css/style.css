@@ -675,12 +675,13 @@ fieldset.budget-class > legend {
     margin-bottom: 10px;
 }
 
+
 .budget-class-type.active {
-    background: #000;
+    background: var(--accent);
 }
 
 .budget-class-type.active > label {
-    color: #fff;
+    color: #000;
 }
 
 .budget-class-type label {
