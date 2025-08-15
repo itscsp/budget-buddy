@@ -24,6 +24,7 @@ require_once BUDGET_BUDDY_DIR . 'includes/bb-admin-pages.php';
 require_once BUDGET_BUDDY_DIR . 'includes/functions/transactions.php';
 require_once BUDGET_BUDDY_DIR . 'includes/functions/plans.php';
 require_once BUDGET_BUDDY_DIR . 'includes/functions/reports.php';
+require_once BUDGET_BUDDY_DIR . 'includes/functions/api.php';
 require_once BUDGET_BUDDY_DIR . 'plugin-update-checker/plugin-update-checker.php';
 require_once BUDGET_BUDDY_DIR . 'includes/class-budget-buddy.php';
 
